@@ -51,5 +51,5 @@ jobs:
       - name: Create and verify release
         run: |
           py_interpreter="${{ steps.py.outputs.python-path }}"
-          ${py_interpreter} environment/script/create_and_verify_release.py ./build
+          PYTHONPATH="source/package:$PYTHONPATH" ${py_interpreter} environment/script/create_and_verify_release.py ./build
           cmake --build build --target installer_release
