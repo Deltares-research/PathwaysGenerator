@@ -25,7 +25,7 @@ jobs:
           - { os: "windows-2022", arch: x64 }
     steps:
       - name: Setup Linux platform
-        if: contains(${{ matrix.platform.os}}, "ubuntu")
+        if: ${{ startsWith(matrix.platform.os, 'ubuntu') }}
         run: |
           sudo apt-get update
           sudo apt-get install libegl1
