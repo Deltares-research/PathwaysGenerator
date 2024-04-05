@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }} / ${{ matrix.target-platform }}
+    name: ${{ matrix.platform.os }} / ${{ matrix.platform.target_platform }} / ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     defaults:
@@ -16,15 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         python_version: ["3.9", "3.12"]
-        include:
-        - os: "macos-14"
-          target-platform: arm-64
-        - os: "macos-13"
-          target-platform: osx-64
-        - os: "ubuntu-22.04"
-          target-platform: linux-64
-        - os: "windows-2022"
-          target-platform: win-64
+        platform:
+          - { os: "macos-14", target_platform: arm-64 }
+          - { os: "macos-13", target_platform: osx-64 }
+          - { os: "ubuntu-22.04", target_platform: linux-64 }
+          - { os: "windows-2022", target_platform: win-64 }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +29,8 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
           cache: "pip"
-          cache-dependency-path: "**/requirements.txt"
+          cache-dependency-path: "**/requirements*.txt"
+      - run: pip install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
       - name: Test
         run: |
           mkdir build
