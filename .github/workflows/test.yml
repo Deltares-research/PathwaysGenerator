@@ -29,10 +29,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libegl1
-      - name: Test
-        if: contains(matrix.platform.os, "ubuntu")
-        run: |
-          echo "Yeah!"
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Python
