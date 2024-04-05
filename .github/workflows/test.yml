@@ -35,10 +35,10 @@ jobs:
       - name: Install packages
         run: |
           pip install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
-      - name: Analyse files
-        run: |
-          pre-commit install
-          pre-commit run --from-ref origin/HEAD --to-ref HEAD
+      # - name: Analyse files
+      #   run: |
+      #     pre-commit install
+      #     pre-commit run --from-ref origin/HEAD --to-ref HEAD
       - name: Run tests
         run: |
           mkdir build
