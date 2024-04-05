@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import docopt
 
 import adaptation_pathways as ap
+from adaptation_pathways.cli.main import main_function
 
 
 def verify_build_directory(build_directory_path: Path) -> None:
@@ -129,7 +130,8 @@ def create_and_verify_release(build_directory_path: Path) -> Path:
     return release_zip_path
 
 
-def main() -> None:
+@main_function
+def main() -> int:
     command = os.path.basename(sys.argv[0])
     usage = f"""\
 Create a release and verify the contents seem OK
@@ -152,6 +154,8 @@ Options:
 
     print(f"\nPackage {release_zip_path} is ready to be released!")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
