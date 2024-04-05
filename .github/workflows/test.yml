@@ -38,12 +38,27 @@ jobs:
           py_interpreter=${{ steps.py.outputs.python-path }}
           echo $py_interpreter
 
+          echo "1"
+          py_interpreter=${{ steps.py.outputs.python-path }}
+          py_interpreter=${py_interpreter//\\//}
+          echo $py_interpreter
+
+          echo "2"
+          py_interpreter=${{ steps.py.outputs.python-path }}
           py_interpreter="${py_interpreter//\\//}"
           echo $py_interpreter
 
+          echo "3"
           py_interpreter=${{ steps.py.outputs.python-path }}
           py_interpreter='${py_interpreter//\\//}'
           echo $py_interpreter
+
+          echo "4"
+          py_interpreter=${{ steps.py.outputs.python-path }}
+          py_interpreter=`${py_interpreter//\\//}`
+          echo $py_interpreter
+
+          py_interpreter=${{ steps.py.outputs.python-path }}
 
           $py_interpreter -m pip --version
           $py_interpreter -m pip install \

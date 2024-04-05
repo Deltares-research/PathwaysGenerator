@@ -1,4 +1,4 @@
 docopt
 matplotlib
 networkx[default]
-pyside6
+pyside6>=6.6
