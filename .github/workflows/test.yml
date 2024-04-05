@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.platform.os }} / ${{ matrix.platform.target_platform }} / ${{ matrix.python_version }}
+    name: ${{ matrix.platform.os }} / ${{ matrix.platform.arch }} / ${{ matrix.python_version }}
     runs-on: ${{ matrix.platform.os }}
     timeout-minutes: 30
     defaults:
@@ -15,12 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.9", "3.12"]
+        # min version, max version
+        # 3.11 is the first version supported by darwin / arm64 runner
+        python_version: ["3.11", "3.12"]
         platform:
-          - { os: "macos-14", target_platform: arm-64 }
-          - { os: "macos-13", target_platform: osx-64 }
-          - { os: "ubuntu-22.04", target_platform: linux-64 }
-          - { os: "windows-2022", target_platform: win-64 }
+          - { os: "macos-14", arch: arm64 }
+          - { os: "macos-13", arch: x64 }
+          - { os: "ubuntu-22.04", arch: x64 }
+          - { os: "windows-2022", arch: x64 }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
