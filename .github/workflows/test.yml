@@ -36,7 +36,15 @@ jobs:
       - name: Install packages
         run: |
           py_interpreter=${{ steps.py.outputs.python-path }}
-          py_interpreter=${py_interpreter//\\//}
+          echo $py_interpreter
+
+          py_interpreter="${py_interpreter//\\//}"
+          echo $py_interpreter
+
+          py_interpreter=${{ steps.py.outputs.python-path }}
+          py_interpreter='${py_interpreter//\\//}'
+          echo $py_interpreter
+
           $py_interpreter -m pip --version
           $py_interpreter -m pip install \
             -r environment/configuration/requirements.txt \
@@ -44,7 +52,7 @@ jobs:
       - name: Run tests
         run: |
           py_interpreter=${{ steps.py.outputs.python-path }}
-          py_interpreter=${py_interpreter//\\//}
+          py_interpreter="${py_interpreter//\\//}"
           $py_interpreter --version
           $py_interpreter -c "import networkx"
           mkdir build
