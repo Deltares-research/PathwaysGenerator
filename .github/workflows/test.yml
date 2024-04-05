@@ -60,7 +60,7 @@ jobs:
           # (:).
           pushd source/package
           py_interpreter="${{ steps.py.outputs.python-path }}"
-          ${py_interpreter} environment/script/create_and_verify_release.py ../../build
+          ${py_interpreter} ../../environment/script/create_and_verify_release.py ../../build
           popd
 
           cmake --build build --target installer_release
