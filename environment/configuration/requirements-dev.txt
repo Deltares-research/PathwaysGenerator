@@ -6,7 +6,12 @@ linkchecker
 ninja
 pre-commit
 pyinstaller
+
+# Use a local updated version of pylint instead of the older version possibly installed on
+# the system and instead of the normal pylint pre-commit hook. pre-commit hooks run in their own
+# virtual environment that doesn't know about our package, resulting in lots of errors.
 pylint
+
 sphinx
 sphinxcontrib-mermaid
 sphinx-gallery
