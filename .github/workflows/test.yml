@@ -36,17 +36,11 @@ jobs:
       - name: Install packages
         run: |
           py_interpreter="${{ steps.py.outputs.python-path }}"
-          py_interpreset=${py_interpreter//\\//}
-          $py_interpreter -m pip --version
           $py_interpreter -m pip install \
             -r environment/configuration/requirements.txt \
             -r environment/configuration/requirements-dev.txt
       - name: Run tests
         run: |
-          py_interpreter=${{ steps.py.outputs.python-path }}
-          py_interpreter="${py_interpreter//\\//}"
-          $py_interpreter --version
-          $py_interpreter -c "import networkx"
           mkdir build
           cd build
           cmake -S .. -G Ninja
@@ -56,5 +50,6 @@ jobs:
           cmake --build build --target documentation
       - name: Create and verify release
         run: |
-          create_and_verify_release.py ./build
+          py_interpreter="${{ steps.py.outputs.python-path }}"
+          ${py_interpreter} environment/script/create_and_verify_release.py ./build
           cmake --build build --target installer_release
