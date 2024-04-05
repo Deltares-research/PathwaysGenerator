@@ -34,13 +34,18 @@ jobs:
           cache-dependency-path: "**/requirements*.txt"
       - name: Install packages
         run: |
-          type pip
-          type pip3
-          pip3 install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
+          pip install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
+      - name: Analyse files
+        run: |
+          pre-commit install
+          pre-commit run --from-ref origin/HEAD --to-ref HEAD
       - name: Run tests
         run: |
           mkdir build
           cd build
+          type python
+          python --version
+          python -c "import networkx"
           cmake -S .. -G Ninja
           ctest --test-dir . --output-on-failure
       - name: Create documentation
