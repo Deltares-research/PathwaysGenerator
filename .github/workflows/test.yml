@@ -34,10 +34,19 @@ jobs:
           cache-dependency-path: "**/requirements*.txt"
       - name: Install packages
         run: |
-          pip install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
-      - name: Test
+          type pip
+          type pip3
+          pip3 install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
+      - name: Run tests
         run: |
           mkdir build
           cd build
           cmake -S .. -G Ninja
           ctest --test-dir . --output-on-failure
+      - name: Create documentation
+        run: |
+          cmake --build build --target documentation
+      - name: Create and verify release
+        run: |
+          create_and_verify_release.py ./build
+          cmake --build build --target installer_release
