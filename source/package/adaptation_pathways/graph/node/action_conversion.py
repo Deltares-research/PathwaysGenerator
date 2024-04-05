@@ -3,6 +3,7 @@ An ActionConversion is ...
 
 This module contains the implementation of the :py:class:`ActionConversion` class.
 """
+
 from .action_period import ActionPeriod
 from .node import Node
 

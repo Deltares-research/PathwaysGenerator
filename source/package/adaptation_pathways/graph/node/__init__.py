@@ -6,6 +6,7 @@ that actions can be reused in nodes. Multiple node class instances can refer to 
 (position in a layout for example), and some information needs to be shared between nodes but
 unique per action (colour in a plot for example).
 """
+
 from .action import Action
 from .action_begin import ActionBegin
 from .action_conversion import ActionConversion

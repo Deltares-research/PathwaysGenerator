@@ -1,5 +1,7 @@
 [tool.isort]
+known_ap = "adaptation_pathways"
 lines_after_imports = 2
+sections = "FUTURE,STDLIB,THIRDPARTY,AP,FIRSTPARTY,LOCALFOLDER"
 profile = "black"
 
 [tool.pylint]
