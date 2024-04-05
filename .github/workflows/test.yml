@@ -24,6 +24,15 @@ jobs:
           - { os: "ubuntu-22.04", arch: x64 }
           - { os: "windows-2022", arch: x64 }
     steps:
+      - name: Setup Linux platform
+        if: contains(${{ matrix.platform.os}}, "ubuntu")
+        run: |
+          sudo apt-get update
+          sudo apt-get install libegl1
+      - name: Test
+        if: contains(matrix.platform.os, "ubuntu")
+        run: |
+          echo "Yeah!"
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Python
@@ -50,6 +59,12 @@ jobs:
           cmake --build build --target documentation
       - name: Create and verify release
         run: |
+          # cd into the directory containing our package. Otherwise we need to update PYTHONPATH
+          # and work around the different path separators on Windows (;) and the other platforms
+          # (:).
+          pushd source/package
           py_interpreter="${{ steps.py.outputs.python-path }}"
-          PYTHONPATH="source/package:$PYTHONPATH" ${py_interpreter} environment/script/create_and_verify_release.py ./build
+          ${py_interpreter} environment/script/create_and_verify_release.py ../../build
+          popd
+
           cmake --build build --target installer_release
