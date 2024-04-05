@@ -1,0 +1,36 @@
+name: Analyse
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    name: ${{ matrix.platform.os }} / ${{ matrix.platform.arch }} / python-${{ matrix.python_version }}
+    runs-on: ${{ matrix.platform.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version: ["3.12"]
+        platform:
+          - { os: "ubuntu-22.04", arch: x64 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+          cache: "pip"
+          cache-dependency-path: "**/requirements*.txt"
+      - name: Install packages
+        run: |
+          pip install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
+      - name: Analyse files
+        run: |
+          pre-commit install
+          pre-commit run --all-files
