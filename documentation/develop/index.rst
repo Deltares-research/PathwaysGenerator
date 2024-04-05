@@ -41,19 +41,11 @@ In commands:
    pip3 install -r environment/configuration/requirements.txt -r environment/configuration/requirements-dev.txt
 
    # Install handy tools that will keep our code in good shape:
-   pip3 install pre-commit
    pre-commit install
    # Note: commit .pre-commit-config.yaml if any hooks actually got updated
    pre-commit autoupdate
 
-   # Use a local updated version of pylint instead of the older version possibly installed on
-   # the system and instead of the normal pylint pre-commit hook. pre-commit hooks run in their own
-   # virtual environment that doesn't know about our package, resulting in lots of errors.
-   pip3 install pylint
-
-   pathways_generator.py browser
-   pathways_generator.py window
-   jupyter-lab --notebook-dir=source/notebook/
+   source/script/ap_pathway_generator.py --help
 
 
 The project contains code for generating :ref:`targets <sec-cmake>`, like documentation and the
