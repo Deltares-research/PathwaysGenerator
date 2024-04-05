@@ -35,16 +35,20 @@ jobs:
           cache-dependency-path: "**/requirements*.txt"
       - name: Install packages
         run: |
-          ${{ steps.py.outputs.python-path }} -m pip --version
-          ${{ steps.py.outputs.python-path }} -m pip install \
+          py_interpreter=${{ steps.py.outputs.python-path }}
+          py_interpreter=${py_interpreter//\\//}
+          $py_interpreter -m pip --version
+          $py_interpreter -m pip install \
             -r environment/configuration/requirements.txt \
             -r environment/configuration/requirements-dev.txt
       - name: Run tests
         run: |
+          py_interpreter=${{ steps.py.outputs.python-path }}
+          py_interpreter=${py_interpreter//\\//}
+          $py_interpreter --version
+          $py_interpreter -c "import networkx"
           mkdir build
           cd build
-          ${{ steps.py.outputs.python-path }} --version
-          ${{ steps.py.outputs.python-path }} -c "import networkx"
           cmake -S .. -G Ninja
           ctest --test-dir . --output-on-failure
       - name: Create documentation
