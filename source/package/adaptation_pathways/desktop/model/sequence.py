@@ -8,15 +8,15 @@ from ...plot.colour import Colour
 class SequenceModel(QtCore.QAbstractTableModel):
     _sequences: list[list[Action]]
     _horizonal_headers: tuple[str, str]
-    _colour_by_action: dict[Action, Colour]
+    _colour_by_action_name: dict[str, Colour]
 
     def __init__(
-        self, sequences: list[list[Action]], colour_by_action: dict[Action, Colour]
+        self, sequences: list[list[Action]], colour_by_action_name: dict[str, Colour]
     ):
         super().__init__()
         self._sequences = sequences
         self._horizonal_headers = ("From action", "To action")
-        self._colour_by_action = colour_by_action
+        self._colour_by_action_name = colour_by_action_name
 
     # pylint: disable=inconsistent-return-statements
     def data(self, index, role):
@@ -26,11 +26,11 @@ class SequenceModel(QtCore.QAbstractTableModel):
 
         if role == Qt.DecorationRole:
             action = self._sequences[index.row()][index.column()]
-            colour = self._colour_by_action[
+            colour = self._colour_by_action_name[
                 next(
-                    action_
-                    for action_ in self._colour_by_action
-                    if action_.name == action.name
+                    action_name
+                    for action_name in self._colour_by_action_name
+                    if action_name == action.name
                 )
             ]
             return QtGui.QColor.fromRgbF(*colour)

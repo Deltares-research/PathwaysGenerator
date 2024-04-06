@@ -10,6 +10,7 @@ import adaptation_pathways as ap
 
 from .. import alias
 from ..action import Action
+from ..action_combination import ActionCombination
 from ..graph import (
     PathwayGraph,
     PathwayMap,
@@ -47,6 +48,9 @@ from .widget.sequence_graph import SequenceGraphWidget
 # pylint: disable=too-many-instance-attributes, too-many-locals
 
 
+ap_repo_url = "https://github.com/Deltares-research/PathwaysGenerator"
+
+
 loader = QUiLoader()
 
 
@@ -75,6 +79,25 @@ def show_error_message(parent, message):
 # def exception_handler(type_, value, traceback):
 #     QtWidgets.QMessageBox.critical(None, "Error", f"{value}")
 #     sys.stderr.write(f"{traceback}")
+
+
+def handle_exceptions(function):
+    def wrap(self, *args, **kwargs):
+        try:
+            function(self, *args, **kwargs)
+        except KeyError as exception:
+            # TODO Add traceback
+            show_error_message(
+                self.ui,
+                f"Key error: {exception}\n"
+                "This is likely a bug.\n"
+                f"Please report it at {ap_repo_url}/issues",
+            )
+            raise
+        except ValueError as exception:
+            show_error_message(self.ui, f"{exception}")
+
+    return wrap
 
 
 class MainUI(QObject):  # Not a widget
@@ -133,14 +156,14 @@ class MainUI(QObject):  # Not a widget
             QtWidgets.QAbstractItemView.InternalMove
         )
 
-        self.colour_by_action: dict[Action, Colour] = {}  # type: ignore
+        self.colour_by_action_name: dict[str, Colour] = {}  # type: ignore
 
         self.actions: list[list] = []  # type: ignore
-        self.action_model = ActionModel(self.actions, self.colour_by_action)
+        self.action_model = ActionModel(self.actions, self.colour_by_action_name)
         self.ui.table_actions.setModel(self.action_model)
 
         self.sequences: list[list[Action]] = []  # type: ignore
-        self.sequence_model = SequenceModel(self.sequences, self.colour_by_action)
+        self.sequence_model = SequenceModel(self.sequences, self.colour_by_action_name)
         self.ui.table_sequences.setModel(self.sequence_model)
 
         self.action_model.rowsAboutToBeRemoved.connect(
@@ -198,11 +221,8 @@ class MainUI(QObject):  # Not a widget
         return False
 
     def _plot_sequence_graph(self, sequence_graph: SequenceGraph) -> None:
-        colour_by_action_name = {
-            action.name: colour for action, colour in self.colour_by_action.items()
-        }
         plot_colours = PlotColours(
-            sequence_graph_node_colours(sequence_graph, colour_by_action_name),
+            sequence_graph_node_colours(sequence_graph, self.colour_by_action_name),
             default_edge_colours(sequence_graph),
             default_node_edge_colours(sequence_graph),
             default_label_colour(),
@@ -215,11 +235,8 @@ class MainUI(QObject):  # Not a widget
         self.sequence_graph_widget.draw()
 
     def _plot_pathway_graph(self, pathway_graph: PathwayGraph) -> None:
-        colour_by_action_name = {
-            action.name: colour for action, colour in self.colour_by_action.items()
-        }
         plot_colours = PlotColours(
-            pathway_graph_node_colours(pathway_graph, colour_by_action_name),
+            pathway_graph_node_colours(pathway_graph, self.colour_by_action_name),
             default_edge_colours(pathway_graph),
             default_node_edge_colours(pathway_graph),
             default_label_colour(),
@@ -232,12 +249,9 @@ class MainUI(QObject):  # Not a widget
         self.pathway_graph_widget.draw()
 
     def _plot_pathway_map(self, pathway_map: PathwayMap) -> None:
-        colour_by_action_name = {
-            action.name: colour for action, colour in self.colour_by_action.items()
-        }
         plot_colours = PlotColours(
-            pathway_map_node_colours(pathway_map, colour_by_action_name),
-            pathway_map_edge_colours(pathway_map, colour_by_action_name),
+            pathway_map_node_colours(pathway_map, self.colour_by_action_name),
+            pathway_map_edge_colours(pathway_map, self.colour_by_action_name),
             default_node_edge_colours(pathway_map),
             default_label_colour(),
         )
@@ -290,8 +304,12 @@ class MainUI(QObject):  # Not a widget
                 dbms.read_dataset(dataset_pathname)
             )
 
-            self.colour_by_action.clear()
-            self.colour_by_action.update(dict(colour_by_action.items()))
+            colour_by_action_name = {
+                action.name: colour for action, colour in colour_by_action.items()
+            }
+
+            self.colour_by_action_name.clear()
+            self.colour_by_action_name.update(dict(colour_by_action_name.items()))
 
             self._set_dataset_pathname(dataset_pathname)
 
@@ -309,6 +327,7 @@ class MainUI(QObject):  # Not a widget
 
             self._update_plots()
 
+    @handle_exceptions
     def _save_dataset(self, dataset_pathname: str):
         """
         Save all data to a dataset
@@ -322,7 +341,16 @@ class MainUI(QObject):  # Not a widget
         actions = [record[0] for record in self.actions]
         sequences = [(sequence[0], sequence[1]) for sequence in self.sequences]
         tipping_point_by_action: alias.TippingPointByAction = {}  # TODO
-        colour_by_action = dict(self.colour_by_action.items())
+        colour_by_action = {}
+
+        for action_name, colour in self.colour_by_action_name.items():
+            colour_by_action[
+                next(
+                    record[0]
+                    for record in self.actions
+                    if record[0].name == action_name
+                )
+            ] = colour
 
         try:
             dbms.write_dataset(
@@ -389,7 +417,10 @@ class MainUI(QObject):  # Not a widget
             lambda: self._remove_actions(action_idx, 1)
         )
         context.addAction(remove_action_action)
-        remove_action_action.setEnabled(action_idx != -1)
+        # The root action can only be removed if it is the only action
+        remove_action_action.setEnabled(
+            action_idx != -1 and (action_idx > 0 or len(self.actions) == 1)
+        )
 
         add_action_action = QtGui.QAction("Add action...", self.ui.table_actions)
         add_action_action.triggered.connect(self._add_action)
@@ -404,6 +435,7 @@ class MainUI(QObject):  # Not a widget
 
         context.exec(self.ui.table_actions.viewport().mapToGlobal(pos))
 
+    @handle_exceptions
     def _add_action(self):
         current_nr_actions = len(self.actions)
         name = f"Name{current_nr_actions + 1}"
@@ -411,14 +443,18 @@ class MainUI(QObject):  # Not a widget
         colour = self._current_palette[colour_idx]
 
         action = Action(name)
-        self.colour_by_action[action] = colour
+        assert not name in self.colour_by_action_name, name
+        self.colour_by_action_name[action.name] = colour
         self.actions.append([action])
         self._set_data_changed(True)
 
         self.ui.table_actions.model().layoutChanged.emit()
         self._edit_action(len(self.actions) - 1, default_values=True)
 
-    def _edit_action(self, idx, default_values=False):
+    @handle_exceptions
+    def _edit_action(
+        self, idx, default_values=False
+    ):  # pylint: disable=too-many-statements
         action_record = self.actions[idx]
         action = action_record[0]
 
@@ -431,7 +467,7 @@ class MainUI(QObject):  # Not a widget
 
         palette = dialog.select_colour_button.palette()
         role = dialog.select_colour_button.backgroundRole()
-        colour = QtGui.QColor.fromRgbF(*self.colour_by_action[action])
+        colour = QtGui.QColor.fromRgbF(*self.colour_by_action_name[action.name])
         palette.setColor(role, colour)
         dialog.select_colour_button.setPalette(palette)
         dialog.select_colour_button.setAutoFillBackground(True)
@@ -453,32 +489,86 @@ class MainUI(QObject):  # Not a widget
             dialog.select_colour_button.setPalette(palette)
 
         dialog.select_colour_button.clicked.connect(select_colour)
+
+        actions_menu = QtWidgets.QMenu(dialog)
+
+        combined_action_names = (
+            []
+            if not isinstance(action, ActionCombination)
+            else [combined_action.name for combined_action in action.actions]
+        )
+
+        for record in self.actions:
+            action_name = record[0].name
+            if action_name != action.name:
+                qaction = actions_menu.addAction(action_name)
+                qaction.setCheckable(True)
+                qaction.setChecked(action_name in combined_action_names)
+
+        dialog.select_actions_button.setMenu(actions_menu)
+        dialog.select_actions_button.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        # Enable if there are two or more other actions that can be combined
+        dialog.select_actions_button.setEnabled(len(self.actions) > 2)
+
         dialog.adjustSize()
 
         if dialog.exec():
             new_name = dialog.name_edit.text()
 
-            something_changed = new_name != action.name or new_colour != colour
+            new_combined_action_names = [
+                menu_action.text()
+                for menu_action in actions_menu.actions()
+                if menu_action.isChecked()
+            ]
+
+            something_changed = (
+                new_name != action.name
+                or new_colour != colour
+                or new_combined_action_names != combined_action_names
+            )
 
             if something_changed:
+                old_action = action
+
+                if len(new_combined_action_names) == 0:
+                    new_action = Action(new_name)
+                else:
+                    combined_actions = []
+                    for name in new_combined_action_names:
+                        combined_actions.append(
+                            next(
+                                record[0]
+                                for record in self.actions
+                                if record[0].name == name
+                            )
+                        )
+                    new_action = ActionCombination(new_name, combined_actions)
+
                 # self.actions[idx][0].name = new_name
                 # self.actions[idx][1] = new_colour.getRgbF()
 
                 self._set_data_changed(True)
 
-                self.colour_by_action[action] = new_colour.getRgbF()
-                self.actions[idx] = [action]
+                self.colour_by_action_name.pop(old_action.name)
+                self.colour_by_action_name[new_action.name] = new_colour.getRgbF()
+                self.actions[idx] = [new_action]  # [action]
 
-                old_name = action.name
+                old_name = old_action.name
 
                 for sequence in self.sequences:
                     from_action, to_action = sequence
                     if from_action.name == old_name:
-                        from_action.name = new_name
+                        # from_action.name = new_name
+                        sequence[0] = copy.copy(new_action)
                     if to_action.name == old_name:
-                        to_action.name = new_name
+                        # to_action.name = new_name
+                        sequence[1] = copy.copy(new_action)
 
-                self.actions[idx][0].name = new_name
+                # self.actions[idx][0].name = new_name
+
+                assert len(self.colour_by_action_name) == len(
+                    self.actions
+                ), f"{self.colour_by_action_name} ↔ {self.actions}"
 
                 # new_action_tuple = (
                 #     Action(new_name),
@@ -512,9 +602,44 @@ class MainUI(QObject):  # Not a widget
     ):  # pylint: disable=unused-argument
         # Handle the situation that actions are about to be removed from the table:
         # - Sequences that involve the actions must be removed as well
+        # - Action combinations that involve the actions must be removed as well
         # - Colours associated with the actions must be removed
+
         actions = [record[0] for record in self.actions[first_idx : last_idx + 1]]
         action_names = [action.name for action in actions]
+
+        action_combinations = [
+            record[0]
+            for record in self.actions
+            if isinstance(record[0], ActionCombination)
+            and any(
+                combined_action_name in action_names
+                for combined_action_name in [
+                    combined_action.name for combined_action in record[0].actions
+                ]
+            )
+        ]
+
+        if all(
+            action_combination.name in action_names
+            for action_combination in action_combinations
+        ):
+            action_combinations.clear()
+
+        if len(action_combinations) > 0:
+            # TODO Prevent this from happening of deal with it. Here it is too late to cancel.
+            action_combination_names = ", ".join(
+                action_combination.name for action_combination in action_combinations
+            )
+            QtWidgets.QMessageBox.warning(
+                self.ui,
+                "Warning",
+                "You should not remove actions that are still being used in action combinations.\n"
+                f"Remove those first: {action_combination_names}.\n"
+                "We will continue, but the application will likely crash due to inconsistencies.",
+                QtWidgets.QMessageBox.Close,
+            )
+
         sequences = [
             record
             for record in self.sequences
@@ -524,8 +649,8 @@ class MainUI(QObject):  # Not a widget
         for sequence in sequences:
             self.ui.table_sequences.model().removeRow(self.sequences.index(sequence))
 
-        for action in actions:
-            del self.colour_by_action[action]
+        for action_name in action_names:
+            del self.colour_by_action_name[action_name]
 
     def _actions_removed(
         self, parent, first_idx, last_idx
@@ -593,6 +718,7 @@ class MainUI(QObject):  # Not a widget
         self._edit_sequence(len(self.sequences) - 1)
         self._update_plots()
 
+    @handle_exceptions
     def _edit_sequence(self, idx):  # pylint: disable=too-many-statements
         sequence_record = self.sequences[idx]
         from_action, to_action = sequence_record
@@ -622,7 +748,7 @@ class MainUI(QObject):  # Not a widget
         # To end a sequence, one of the existing actions must be selected
         for action in actions:
             image = QtGui.QPixmap(16, 16)
-            image.fill(QtGui.QColor.fromRgbF(*self.colour_by_action[action]))
+            image.fill(QtGui.QColor.fromRgbF(*self.colour_by_action_name[action.name]))
             dialog.from_action_start_combo_box.addItem(image, action.name)
             dialog.to_action_combo_box.addItem(image, action.name)
 
@@ -632,10 +758,18 @@ class MainUI(QObject):  # Not a widget
             image = QtGui.QImage(16, 16, QtGui.QImage.Format_RGB32)
             painter = QtGui.QPainter(image)
             painter.fillRect(
-                0, 0, 8, 16, QtGui.QColor.fromRgbF(*self.colour_by_action[from_action_])
+                0,
+                0,
+                8,
+                16,
+                QtGui.QColor.fromRgbF(*self.colour_by_action_name[from_action_.name]),
             )
             painter.fillRect(
-                8, 0, 8, 16, QtGui.QColor.fromRgbF(*self.colour_by_action[to_action_])
+                8,
+                0,
+                8,
+                16,
+                QtGui.QColor.fromRgbF(*self.colour_by_action_name[to_action_.name]),
             )
             painter.end()
             dialog.from_action_continue_combo_box.addItem(
@@ -683,9 +817,9 @@ class MainUI(QObject):  # Not a widget
                 else:
                     # Deep copy the existing action
                     new_from_action = copy.deepcopy(actions[action_idx])
-                    self.colour_by_action[new_from_action] = self.colour_by_action[
-                        actions[action_idx]
-                    ]
+                    self.colour_by_action_name[new_from_action.name] = (
+                        self.colour_by_action_name[actions[action_idx].name]
+                    )
             else:
                 sequence_idx = dialog.from_action_continue_combo_box.currentIndex()
 
@@ -700,9 +834,9 @@ class MainUI(QObject):  # Not a widget
             else:
                 # Deep copy the existing action
                 new_to_action = copy.deepcopy(actions[action_idx])
-                self.colour_by_action[new_to_action] = self.colour_by_action[
-                    actions[action_idx]
-                ]
+                self.colour_by_action_name[new_to_action.name] = (
+                    self.colour_by_action_name[actions[action_idx].name]
+                )
 
             something_changed = (
                 new_from_action != from_action or new_to_action != to_action

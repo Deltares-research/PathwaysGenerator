@@ -76,20 +76,23 @@ class SQLiteTest(unittest.TestCase):
         self, database_path: str, actions: alias.Actions, sequences: alias.Sequences
     ):
 
-        # Add tipping point for the root action, which is not part of the sequences collection
-        to_action_names = [sequence[1].name for sequence in sequences]
-        root_actions = {
-            sequence[0]
-            for sequence in sequences
-            if sequence[0].name not in to_action_names
-        }
-        assert len(root_actions) == 1, f"{root_actions}"
-        root_action = root_actions.pop()
-        tipping_point_by_action = {root_action: random.randint(2020, 2100)}
+        tipping_point_by_action = {}
 
-        tipping_point_by_action |= {
-            sequence[1]: random.randint(2020, 2100) for sequence in sequences
-        }
+        if len(sequences) > 0:
+            # Add tipping point for the root action, which is not part of the sequences collection
+            to_action_names = [sequence[1].name for sequence in sequences]
+            root_actions = {
+                sequence[0]
+                for sequence in sequences
+                if sequence[0].name not in to_action_names
+            }
+            assert len(root_actions) == 1, f"{root_actions}"
+            root_action = root_actions.pop()
+            tipping_point_by_action = {root_action: random.randint(2020, 2100)}
+
+            tipping_point_by_action |= {
+                sequence[1]: random.randint(2020, 2100) for sequence in sequences
+            }
 
         colours = list(default_action_colours(len(actions)))
         colour_by_action = {action: colours[idx] for idx, action in enumerate(actions)}
@@ -159,6 +162,11 @@ class SQLiteTest(unittest.TestCase):
     def test_converging_pathway(self):
         database_path = "test_converging_pathway.db"
         actions, sequences = test_data.converging_pathway()
+        self._test_round_trip(database_path, actions, sequences)
+
+    def test_action_combination_01_actions(self):
+        database_path = "test_action_combination_01_actions.db"
+        actions, sequences = test_data.action_combination_01_actions()
         self._test_round_trip(database_path, actions, sequences)
 
     def test_action_combination_01_pathway(self):

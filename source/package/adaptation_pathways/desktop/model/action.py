@@ -1,7 +1,6 @@
 from PySide6 import QtCore, QtGui
 from PySide6.QtCore import Qt
 
-from ...action import Action
 from ...plot.colour import Colour
 
 
@@ -9,14 +8,14 @@ class ActionModel(QtCore.QAbstractTableModel):
 
     _actions: list[list]
     _headers: tuple[str]
-    _colour_by_action: dict[Action, Colour]
+    _colour_by_action_name: dict[str, Colour]
 
-    def __init__(self, actions: list[list], colour_by_action: dict[Action, Colour]):
+    def __init__(self, actions: list[list], colour_by_action_name: dict[str, Colour]):
 
         super().__init__()
         self._actions = actions
         self._headers = ("Name",)
-        self._colour_by_action = colour_by_action
+        self._colour_by_action_name = colour_by_action_name
 
     # pylint: disable=inconsistent-return-statements, no-else-return
     def data(self, index, role):
@@ -28,7 +27,7 @@ class ActionModel(QtCore.QAbstractTableModel):
         elif role == Qt.DecorationRole:
             if index.column() == 0:
                 action = self._actions[index.row()][0]
-                colour = self._colour_by_action[action]
+                colour = self._colour_by_action_name[action.name]
                 return QtGui.QColor.fromRgbF(*colour)
 
     def rowCount(self, index):  # pylint: disable=unused-argument

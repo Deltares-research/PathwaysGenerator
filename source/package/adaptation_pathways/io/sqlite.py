@@ -108,14 +108,14 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
         f"""
         CREATE TABLE {_action_combination_table_name}
         (
-            edition_id INTEGER NOT NULL,
-            combined_edition_id INTEGER NOT NULL,
+            action_id INTEGER NOT NULL,
+            combined_action_id INTEGER NOT NULL,
 
-            UNIQUE (edition_id, combined_edition_id),
-            FOREIGN KEY (edition_id)
-                REFERENCES {_edition_table_name} (edition_id),
-            FOREIGN KEY (combined_edition_id)
-                REFERENCES {_edition_table_name} (edition_id)
+            UNIQUE (action_id, combined_action_id),
+            FOREIGN KEY (action_id)
+                REFERENCES {_action_table_name} (action_id),
+            FOREIGN KEY (combined_action_id)
+                REFERENCES {_action_table_name} (action_id)
         )
         """
     )
@@ -270,13 +270,13 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
     # any number (≥ 2) of actions can be combined into a single action combination.
     action_combination_records = []
 
-    for action, edition_id in edition_id_by_instance.items():
+    for action in actions:
         if isinstance(action, ActionCombination):
             for combined_action in action.actions:
                 action_combination_records.append(
                     {
-                        "edition_id": edition_id,
-                        "combined_edition_id": edition_id_by_instance[combined_action],
+                        "action_id": action_id_by_name[action.name],
+                        "combined_action_id": action_id_by_name[combined_action.name],
                     }
                 )
 
@@ -285,13 +285,13 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
             f"""
             INSERT INTO {_action_combination_table_name}
             (
-                edition_id,
-                combined_edition_id
+                action_id,
+                combined_action_id
             )
             VALUES
             (
-                :edition_id,
-                :combined_edition_id
+                :action_id,
+                :combined_action_id
             )
             """,
             action_combination_records,
@@ -342,20 +342,49 @@ def read_dataset(  # pylint: disable=too-many-locals
 
     # TODO Use SQL for this?! We've got all relations set up. Use'm!
 
+    action_data = list(
+        connection.execute(
+            f"""
+            SELECT action_id, name
+            FROM {_action_table_name}
+            """
+        )
+    )
+
+    action_name_by_id = {}
+
+    for action_id, name in action_data:
+        action_name_by_id[action_id] = name
+
     action_combination_data = list(
         connection.execute(
             f"""
-            SELECT edition_id, combined_edition_id
+            SELECT action_id, combined_action_id
             FROM {_action_combination_table_name}
             """
         )
     )
-    combined_edition_ids_by_edition_id: dict[int, list[int]] = {}
+    combined_action_ids_by_action_id: dict[int, list[int]] = {}
 
-    for edition_id, combined_edition_id in action_combination_data:
-        combined_edition_ids_by_edition_id.setdefault(edition_id, []).append(
-            combined_edition_id
+    for action_id, combined_action_id in action_combination_data:
+        combined_action_ids_by_action_id.setdefault(action_id, []).append(
+            combined_action_id
         )
+
+    action_by_id: dict[int, alias.Action] = {}
+
+    # First add a regular action instance for all actions. This will keep the order as is.
+    for action_id, action_name in action_name_by_id.items():
+        action_by_id[action_id] = Action(action_name)
+
+    # Now replace some of the actions by action combinations that combine regular actions
+    for action_id, action_name in action_name_by_id.items():
+        if action_id in combined_action_ids_by_action_id:
+            combined_actions = [
+                action_by_id[combined_action_id]
+                for combined_action_id in combined_action_ids_by_action_id[action_id]
+            ]
+            action_by_id[action_id] = ActionCombination(action_name, combined_actions)
 
     edition_data = list(
         connection.execute(
@@ -366,52 +395,12 @@ def read_dataset(  # pylint: disable=too-many-locals
         )
     )
 
-    action_id_by_edition_id: dict[int, int] = {
-        edition_id: action_id for action_id, edition_id in edition_data
-    }
-
-    combined_action_ids_by_action_id: dict[int, list[int]] = {
-        action_id_by_edition_id[edition_id]: [
-            action_id_by_edition_id[edition_id] for edition_id in combined_edition_ids
-        ]
-        for edition_id, combined_edition_ids in combined_edition_ids_by_edition_id.items()
-    }
-
-    action_data = list(
-        connection.execute(
-            f"""
-            SELECT action_id, name
-            FROM {_action_table_name}
-            """
-        )
-    )
-    action_instance_by_id: dict[int, Action | ActionCombination] = {}
-
-    for action_id, name in action_data:
-        if action_id not in combined_action_ids_by_action_id:
-            action_instance_by_id[action_id] = Action(name)
-        else:
-            # Placeholder. First add the regular actions. The ones to combine may come after the
-            # current combination.
-            action_instance_by_id[action_id] = Action(name)
-
-    for action_id, name in action_data:
-        if action_id in combined_action_ids_by_action_id:
-            combined_action_ids = combined_action_ids_by_action_id[action_id]
-            combined_actions = [
-                action_instance_by_id[combined_action_id]
-                for combined_action_id in combined_action_ids
-            ]
-            action_instance_by_id[action_id] = ActionCombination(name, combined_actions)
-
-    actions: list[Action | ActionCombination] = [
-        action_instance_by_id[record[0]] for record in action_data
-    ]
-
     action_instance_by_edition: dict[tuple[str, int], Action] = {
-        edition_id: copy.copy(action_instance_by_id[action_id])
+        edition_id: copy.copy(action_by_id[action_id])
         for action_id, edition_id in edition_data
     }
+
+    actions: alias.Actions = list(action_by_id.values())
 
     sequence_data = list(
         connection.execute(
@@ -430,15 +419,16 @@ def read_dataset(  # pylint: disable=too-many-locals
         for sequence_record in sequence_data
     ]
 
-    # One of the sequences relates the root action with itself. This is the one sequence which
-    # we must remove from the collection.
-    root_sequences = [
-        (sequence[0], sequence[1])
-        for sequence in sequences
-        if sequence[0] == sequence[1]
-    ]
-    assert len(root_sequences) == 1, f"{root_sequences}"
-    sequences.remove(root_sequences[0])
+    if len(sequences) > 0:
+        # One of the sequences relates the root action with itself. This is the one sequence which
+        # we must remove from the collection.
+        root_sequences = [
+            (sequence[0], sequence[1])
+            for sequence in sequences
+            if sequence[0] == sequence[1]
+        ]
+        assert len(root_sequences) == 1, f"{root_sequences}"
+        sequences.remove(root_sequences[0])
 
     tipping_point_by_action = {
         action_instance_by_edition[sequence_record[2]]: sequence_record[3]
@@ -453,11 +443,11 @@ def read_dataset(  # pylint: disable=too-many-locals
     )
 
     colour_by_action = {
-        action_instance_by_id[plot_record[0]]: hex_to_rgba(plot_record[1])
+        action_by_id[plot_record[0]]: hex_to_rgba(plot_record[1])
         for plot_record in plot_data
     }
 
-    for action in actions:
+    for action in action_by_id.values():
         if not action in colour_by_action:
             colour_by_action[action] = default_node_colour()
 

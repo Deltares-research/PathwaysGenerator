@@ -71,6 +71,18 @@ def converging_pathway():
     return actions, sequences
 
 
+def action_combination_01_actions():
+    current = Action("current")
+    a = Action("a")
+    b = Action("b")
+    c = ActionCombination("c", [a, b])
+
+    actions = [current, a, b, c]
+    sequences = []
+
+    return actions, sequences
+
+
 def action_combination_01_pathway():
     current = Action("current")
     a = Action("a")
