@@ -256,7 +256,7 @@ def read_sequences(
             raise ValueError(
                 "Exactly one sequence must relate the root / current action with itself. "
                 "This allows a tipping point to be defined for the graph's first action. "
-                "Such a sequence is not present in the file. "
+                "Such a sequence is not present in the file."
             )
 
     return sequences, tipping_point_by_action

@@ -162,8 +162,12 @@ class MainUI(QObject):  # Not a widget
         self.action_model = ActionModel(self.actions, self.colour_by_action_name)
         self.ui.table_actions.setModel(self.action_model)
 
+        self.tipping_point_by_action: alias.TippingPointByAction = {}  # type: ignore
+
         self.sequences: list[list[Action]] = []  # type: ignore
-        self.sequence_model = SequenceModel(self.sequences, self.colour_by_action_name)
+        self.sequence_model = SequenceModel(
+            self.sequences, self.tipping_point_by_action, self.colour_by_action_name
+        )
         self.ui.table_sequences.setModel(self.sequence_model)
 
         self.action_model.rowsAboutToBeRemoved.connect(
@@ -278,6 +282,11 @@ class MainUI(QObject):  # Not a widget
     def _update_plots(self) -> None:
         try:
             sequences = [(record[0], record[1]) for record in self.sequences]
+
+            if len(sequences) > 0:
+                assert sequences[0][0] == sequences[0][1], "expected root action"
+                del sequences[0]
+
             sequence_graph = sequences_to_sequence_graph(sequences)
             pathway_graph = sequence_graph_to_pathway_graph(sequence_graph)
             pathway_map = pathway_graph_to_pathway_map(pathway_graph)
@@ -304,6 +313,8 @@ class MainUI(QObject):  # Not a widget
                 dbms.read_dataset(dataset_pathname)
             )
 
+            self.tipping_point_by_action.update(tipping_point_by_action)
+
             colour_by_action_name = {
                 action.name: colour for action, colour in colour_by_action.items()
             }
@@ -319,6 +330,19 @@ class MainUI(QObject):  # Not a widget
             self.ui.table_actions.model().layoutChanged.emit()
 
             self.sequences.clear()
+
+            if len(sequences) > 0:
+                root_actions = {
+                    action
+                    for action in tipping_point_by_action
+                    if action not in [sequence[1] for sequence in sequences]
+                }
+                assert (
+                    len(root_actions) == 1
+                ), f"Expected a single root action, but found {root_actions}"
+                root_action = root_actions.pop()
+                self.sequences.extend([[root_action, root_action]])
+
             self.sequences.extend(
                 [[sequence[0], sequence[1]] for sequence in sequences]
             )
@@ -340,7 +364,16 @@ class MainUI(QObject):  # Not a widget
 
         actions = [record[0] for record in self.actions]
         sequences = [(sequence[0], sequence[1]) for sequence in self.sequences]
-        tipping_point_by_action: alias.TippingPointByAction = {}  # TODO
+
+        if len(sequences) > 0:
+            root_sequences = [
+                (sequence[0], sequence[1])
+                for sequence in sequences
+                if sequence[0] == sequence[1]
+            ]
+            assert len(root_sequences) == 1, f"{root_sequences}"
+            sequences.remove(root_sequences[0])
+
         colour_by_action = {}
 
         for action_name, colour in self.colour_by_action_name.items():
@@ -356,7 +389,7 @@ class MainUI(QObject):  # Not a widget
             dbms.write_dataset(
                 actions,
                 sequences,
-                tipping_point_by_action,
+                self.tipping_point_by_action,
                 colour_by_action,
                 dataset_pathname,
             )
@@ -553,29 +586,10 @@ class MainUI(QObject):  # Not a widget
                 self.colour_by_action_name[new_action.name] = new_colour.getRgbF()
                 self.actions[idx] = [new_action]  # [action]
 
-                old_name = old_action.name
-
-                for sequence in self.sequences:
-                    from_action, to_action = sequence
-                    if from_action.name == old_name:
-                        # from_action.name = new_name
-                        sequence[0] = copy.copy(new_action)
-                    if to_action.name == old_name:
-                        # to_action.name = new_name
-                        sequence[1] = copy.copy(new_action)
-
-                # self.actions[idx][0].name = new_name
-
                 assert len(self.colour_by_action_name) == len(
                     self.actions
                 ), f"{self.colour_by_action_name} ↔ {self.actions}"
 
-                # new_action_tuple = (
-                #     Action(new_name),
-                #     new_colour.getRgbF(),
-                #     new_tipping_point,
-                # )
-                # self.actions[idx] = new_action_tuple
                 # TODO try to use the model logic for this
                 self.ui.table_actions.model().layoutChanged.emit()
                 self.ui.table_sequences.model().layoutChanged.emit()
@@ -709,17 +723,31 @@ class MainUI(QObject):  # Not a widget
 
     def _add_sequence(self):
         assert len(self.actions) > 1
-        from_action = self.actions[0][0]
-        to_action = self.actions[1][0]
+
+        if len(self.sequences) == 0:
+            from_action = copy.copy(self.actions[0][0])
+            to_action = from_action
+        else:
+            from_action = self.sequences[0][0]
+            to_action = copy.copy(self.sequences[0][1])
+
+        # Converging actions is not supported
+        assert to_action not in self.tipping_point_by_action
 
         self.sequences.append([from_action, to_action])
+        self.tipping_point_by_action[to_action] = 0
         # TODO try to use the model logic for this
         self.ui.table_sequences.model().layoutChanged.emit()
-        self._edit_sequence(len(self.sequences) - 1)
+
+        if len(self.sequences) > 1:
+            self._edit_sequence(len(self.sequences) - 1)
+
         self._update_plots()
 
     @handle_exceptions
-    def _edit_sequence(self, idx):  # pylint: disable=too-many-statements
+    def _edit_sequence(
+        self, idx
+    ):  # pylint: disable=too-many-statements, too-many-branches
         sequence_record = self.sequences[idx]
         from_action, to_action = sequence_record
 
@@ -815,8 +843,8 @@ class MainUI(QObject):  # Not a widget
                     # Nothing changed
                     new_from_action = from_action
                 else:
-                    # Deep copy the existing action
-                    new_from_action = copy.deepcopy(actions[action_idx])
+                    # Copy the existing action
+                    new_from_action = copy.copy(actions[action_idx])
                     self.colour_by_action_name[new_from_action.name] = (
                         self.colour_by_action_name[actions[action_idx].name]
                     )
@@ -832,8 +860,8 @@ class MainUI(QObject):  # Not a widget
                 # Nothing changed
                 new_to_action = to_action
             else:
-                # Deep copy the existing action
-                new_to_action = copy.deepcopy(actions[action_idx])
+                # Copy the existing action
+                new_to_action = copy.copy(actions[action_idx])
                 self.colour_by_action_name[new_to_action.name] = (
                     self.colour_by_action_name[actions[action_idx].name]
                 )
@@ -845,6 +873,11 @@ class MainUI(QObject):  # Not a widget
             if something_changed:
                 # TODO try to use the model logic for this
                 self.sequences[idx] = [new_from_action, new_to_action]
+
+                if new_to_action != to_action:
+                    self.tipping_point_by_action.pop(to_action)
+                    self.tipping_point_by_action[new_to_action] = 0
+
                 self.ui.table_sequences.model().layoutChanged.emit()
                 self._update_plots()
 

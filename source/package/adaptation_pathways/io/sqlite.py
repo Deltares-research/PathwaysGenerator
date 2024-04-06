@@ -94,7 +94,7 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
             sequence_id INTEGER NOT NULL,
             from_edition_id INTEGER NOT NULL,
             to_edition_id INTEGER NOT NULL,
-            tipping_point INTEGER NOT NULL CHECK (tipping_point > 0),
+            tipping_point INTEGER NOT NULL CHECK (tipping_point >= 0),
 
             PRIMARY KEY (sequence_id),
             FOREIGN KEY (from_edition_id)
@@ -232,7 +232,9 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
             for action in tipping_point_by_action
             if action not in [sequence[1] for sequence in sequences]
         }
-        assert len(root_actions) == 1, f"{root_actions}"
+        assert (
+            len(root_actions) == 1
+        ), f"Expected a single root action, but found {root_actions}"
         root_action = root_actions.pop()
 
         sequence_records = [
@@ -429,6 +431,11 @@ def read_dataset(  # pylint: disable=too-many-locals
         ]
         assert len(root_sequences) == 1, f"{root_sequences}"
         sequences.remove(root_sequences[0])
+
+    to_actions = {sequence[1] for sequence in sequences}
+    assert len(to_actions) == len(
+        sequences
+    ), "Detected sequences with converging actions which is not supported"
 
     tipping_point_by_action = {
         action_instance_by_edition[sequence_record[2]]: sequence_record[3]
