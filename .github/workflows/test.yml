@@ -53,7 +53,6 @@ jobs:
       - name: Create documentation
         run: |
           cmake --build build --target documentation
-      # - name: Create and verify release
-      #   run: |
-      #     py_interpreter="${{ steps.py.outputs.python-path }}"
-      #     PYTHONPATH=source/package ${py_interpreter} environment/script/create_and_verify_release.py ./build
+      - name: Create package
+        run: |
+          cmake --build build --target package

@@ -82,18 +82,6 @@ add_custom_target(package
                 ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_custom_target(installer
-    VERBATIM
-    COMMAND
-        ${CMAKE_COMMAND} -E env "PYTHONPATH=${AP_PYTHONPATH}"
-            ${PyInstaller_EXECUTABLE}
-                --noconfirm
-                adaptation_pathways.spec
-    DEPENDS
-        adaptation_pathways.spec
-        # icon
-)
-
 add_custom_target(release
     # VERBATIM
     COMMAND
@@ -122,6 +110,18 @@ add_dependencies(release
     test
     documentation
     package
+)
+
+add_custom_target(installer
+    VERBATIM
+    COMMAND
+        ${CMAKE_COMMAND} -E env "PYTHONPATH=${AP_PYTHONPATH}"
+            ${PyInstaller_EXECUTABLE}
+                --noconfirm
+                adaptation_pathways.spec
+    DEPENDS
+        adaptation_pathways.spec
+        # icon
 )
 
 add_custom_target(installer_release

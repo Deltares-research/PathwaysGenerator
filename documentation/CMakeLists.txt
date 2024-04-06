@@ -1,3 +1,6 @@
+add_subdirectory(develop)
+add_subdirectory(use)
+
 configure_file(
     conf.py.in
     conf.py
@@ -8,14 +11,6 @@ foreach(name IN ITEMS changelog glossary index)
     configure_file(
         ${name}.rst
         ${name}.rst
-        COPYONLY
-    )
-endforeach()
-
-foreach(name IN ITEMS develop test use)
-    configure_file(
-        ${name}/index.rst
-        ${name}/index.rst
         COPYONLY
     )
 endforeach()

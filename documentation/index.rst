@@ -1,15 +1,12 @@
 Adaptation Pathways
 ===================
 
-What do you want to do?
-
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
-   Use the package <use/index>
-   Test the package <test/index>
-   Develop the package <develop/index>
+   User manual <use/index>
+   Developer manual <develop/index>
    Glossary <glossary>
    Changelog <changelog>
 

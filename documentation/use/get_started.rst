@@ -1,27 +1,28 @@
-Test
-====
+Get started
+===========
 
-The software can be tested by performing these steps in turn:
+The software can be used by performing these steps in turn:
 
 #. Create and activate a new virtual environment. There are multiple options for this. Below
    we show how to setup a virtual environment using Python's built-in venv module and using Conda.
-
-   .. note::
-
-    Python's built-in venv module and Conda (and others) are alternatives with which you can
-    achieve the same thing: create one or more virtual environments to install Python packages in.
-    You don't need to use Python's venv module if you work with Conda, and vice versa.
-
 #. Install all required Python packages
-#. Test the software
+#. Use the software
 #. Remove the virtual environment
 
-This procedure will leave no traces on your computer. If you intent to test the software regularly,
-you can keep the virtual environment as is, and install the updated version of the software later.
+This procedure will leave no traces on your computer. If you intent to use the software regularly,
+you can keep the virtual environment as is, and install any updated versions of the software later.
 
 
 Create a virtual environment
 ----------------------------
+
+Python's built-in venv module and Conda (and others) are alternatives with which you can
+achieve the same thing: create one or more virtual environments to install Python packages in.
+You don't need to use Python's venv module if you work with Conda, and vice versa.
+
+In the examples below, a virtual environment called ap_test is created. You can of course pick any
+other name for the environment.
+
 
 Using venv
 ~~~~~~~~~~
@@ -61,8 +62,8 @@ The software is packaged as a Python wheel file. The pip command can be used to 
    pip3 install -f dist adaptation_pathways
 
 
-Test software
--------------
+Use software
+------------
 
 Once the software is installed correctly, the following should work:
 

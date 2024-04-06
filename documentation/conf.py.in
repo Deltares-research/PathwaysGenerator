@@ -14,6 +14,7 @@ project = "@CMAKE_PROJECT_NAME@"
 copyright = "2024, TODO"
 author = ", ".join(
     [
+        # TODO Add everybody
         "Marjolijn Haasnoot (Deltares, NL)",
         "Willem van Deursen (Carthago Consultancy, NL)",
         "Kor de Jong (Geoneric, NL)",
