@@ -13,16 +13,22 @@ def main() -> int:
 Generate adaptation pathways
 
 Usage:
-    {command}
+    {command} [<basename>]
     {command} -h | --help
     {command} --version
 
 Options:
+    basename           Either, the name without postfix and extension of text
+                       file(s) to read information from, or the name of a
+                       binary file to read information from.
     -h --help          Show this screen and exit
     --version          Show version and exit
 """
     arguments = sys.argv[1:]
     arguments = docopt.docopt(usage, arguments, version=__version__)
-    status = application()
+    basename_pathname = (
+        arguments["<basename>"] if arguments["<basename>"] is not None else ""  # type: ignore
+    )
+    status = application(basename_pathname)
 
     return status

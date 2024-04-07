@@ -12,6 +12,18 @@ def empty_stream():
     )
 
 
+def empty_pathway_01():
+    current = Action("current")
+    a = Action("a")
+    b = Action("b")
+    c = Action("c")
+
+    actions = [current, a, b, c]
+    sequences = []
+
+    return actions, sequences
+
+
 def serial_pathway():
     current = Action("current")
     a = Action("a")

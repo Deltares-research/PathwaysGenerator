@@ -238,9 +238,11 @@ def _configure_axes(axes, pathway_map, layout, title, plot_colours):
 
     _hide_spines(axes)
 
-    _update_data_limits(
-        axes, coordinates=np.concatenate(list(layout.values())).reshape(len(layout), 2)
-    )
+    if len(layout) > 0:
+        _update_data_limits(
+            axes,
+            coordinates=np.concatenate(list(layout.values())).reshape(len(layout), 2),
+        )
 
     axes.autoscale_view()
 

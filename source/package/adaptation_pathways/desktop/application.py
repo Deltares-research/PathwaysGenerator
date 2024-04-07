@@ -1,5 +1,6 @@
 import copy
 import sys
+import traceback
 from datetime import datetime
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -20,10 +21,12 @@ from ..graph import (
     sequences_to_sequence_graph,
 )
 from ..io import sqlite as dbms
+from ..io.dataset import read_dataset
 from ..plot import (
     pathway_graph_node_colours,
     pathway_map_edge_colours,
     pathway_map_node_colours,
+    plot_classic_pathway_map,
     plot_default_pathway_graph,
     plot_default_pathway_map,
     plot_default_sequence_graph,
@@ -37,6 +40,7 @@ from ..plot.colour import (
     default_node_edge_colours,
     default_nominal_palette,
 )
+from ..plot.util import action_level_by_first_occurrence
 from .model.action import ActionModel
 from .model.sequence import SequenceModel
 from .path import Path
@@ -83,29 +87,26 @@ def show_error_message(parent, message):
 
 def handle_exceptions(function):
     def wrap(self, *args, **kwargs):
+        # pylint: disable=broad-exception-caught
         try:
             function(self, *args, **kwargs)
-        except KeyError as exception:
-            # TODO Add traceback
+        except Exception:
             show_error_message(
                 self.ui,
-                f"Key error: {exception}\n"
-                "This is likely a bug.\n"
-                f"Please report it at {ap_repo_url}/issues",
+                f"{traceback.format_exc()}\n\n"
+                "If you think this is a bug, then please report it at {ap_repo_url}/issues",
             )
-            raise
-        except ValueError as exception:
-            show_error_message(self.ui, f"{exception}")
 
     return wrap
 
 
 class MainUI(QObject):  # Not a widget
-    def __init__(self):
+    def __init__(self, basename_pathname: str = ""):
         # pylint: disable=too-many-statements
         super().__init__()
         self.name = "Adaptation Pathway Generator"
         self.version = f"{ap.__version__}"
+        self.dataset_pathname = ""
 
         self._current_palette = default_nominal_palette()
         configure_colour_dialog(self._current_palette)
@@ -123,6 +124,11 @@ class MainUI(QObject):  # Not a widget
         )
 
         self.ui.installEventFilter(self)
+
+        self.actions: list[list] = []  # type: ignore
+        self.sequences: list[list[Action]] = []  # type: ignore
+        self.tipping_point_by_action: alias.TippingPointByAction = {}  # type: ignore
+        self.colour_by_action_name: dict[str, Colour] = {}  # type: ignore
 
         self.ui.action_open.setIcon(QtGui.QIcon(Path.icon("folder-open-table.png")))
         self.ui.action_save.setIcon(QtGui.QIcon(Path.icon("disk.png")))
@@ -155,16 +161,13 @@ class MainUI(QObject):  # Not a widget
         self.ui.table_sequences.verticalHeader().setDragDropMode(
             QtWidgets.QAbstractItemView.InternalMove
         )
+        self.ui.table_sequences.verticalHeader().sectionMoved.connect(
+            self._sequences_moved
+        )
 
-        self.colour_by_action_name: dict[str, Colour] = {}  # type: ignore
-
-        self.actions: list[list] = []  # type: ignore
         self.action_model = ActionModel(self.actions, self.colour_by_action_name)
         self.ui.table_actions.setModel(self.action_model)
 
-        self.tipping_point_by_action: alias.TippingPointByAction = {}  # type: ignore
-
-        self.sequences: list[list[Action]] = []  # type: ignore
         self.sequence_model = SequenceModel(
             self.sequences, self.tipping_point_by_action, self.colour_by_action_name
         )
@@ -194,6 +197,11 @@ class MainUI(QObject):  # Not a widget
         )
         self.ui.plot_tab_widget.addTab(self.pathway_map_widget, "Pathway map")
 
+        self.pathway_map_classic_widget = PathwayMapWidget(
+            parent=None, width=5, height=4, dpi=100
+        )
+        self.ui.plot_tab_widget.addTab(self.pathway_map_classic_widget, "Pathway map")
+
         self.ui.editor_tab_widget.setCurrentIndex(0)
         self.ui.plot_tab_widget.setCurrentIndex(0)
         self.ui.splitter.setSizes((100, 200))
@@ -202,13 +210,19 @@ class MainUI(QObject):  # Not a widget
             self.sequence_graph_widget,
             self.pathway_graph_widget,
             self.pathway_map_widget,
+            self.pathway_map_classic_widget,
         ]
 
-        self.dataset_pathname = ""
+        # Assume the last plot is the most interesting one
+        self.ui.plot_tab_widget.setCurrentIndex(len(self.plot_widgets) - 1)
+
         self.data_changed = False
 
         self._set_dataset_pathname(self.dataset_pathname)
         self._set_data_changed(self.data_changed)
+
+        if len(basename_pathname) > 0:
+            self._read_from_dataset(basename_pathname)
 
     def eventFilter(self, object_, event):
         if (
@@ -266,6 +280,29 @@ class MainUI(QObject):  # Not a widget
         )
         self.pathway_map_widget.draw()
 
+    def _plot_pathway_classic_map(self, pathway_map: PathwayMap) -> None:
+        plot_colours = PlotColours(
+            pathway_map_node_colours(pathway_map, self.colour_by_action_name),
+            pathway_map_edge_colours(pathway_map, self.colour_by_action_name),
+            default_node_edge_colours(pathway_map),
+            default_label_colour(),
+        )
+
+        if pathway_map.nr_nodes() > 0:
+            pathway_map.assign_tipping_points(self.tipping_point_by_action, verify=True)
+
+        sequences = [(record[0], record[1]) for record in self.sequences]
+        level_by_action = action_level_by_first_occurrence(sequences)
+
+        pathway_map.set_attribute("level_by_action", level_by_action)
+        pathway_map.set_attribute("colour_by_action_name", self.colour_by_action_name)
+
+        self.pathway_map_classic_widget.axes.clear()
+        plot_classic_pathway_map(
+            self.pathway_map_classic_widget.axes, pathway_map, plot_colours=plot_colours
+        )
+        self.pathway_map_classic_widget.draw()
+
     def _log_message(self, message: str) -> None:
         self.log_widget.browser.insertHtml(f"<b>{timestamp()}</b>: {message}<br/>")
 
@@ -284,8 +321,11 @@ class MainUI(QObject):  # Not a widget
             sequences = [(record[0], record[1]) for record in self.sequences]
 
             if len(sequences) > 0:
-                assert sequences[0][0] == sequences[0][1], "expected root action"
-                del sequences[0]
+                root_actions = [
+                    record for record in sequences if record[0] == record[1]
+                ]
+                assert len(root_actions) == 1, "expected single root action"
+                sequences.pop(sequences.index(root_actions[0]))
 
             sequence_graph = sequences_to_sequence_graph(sequences)
             pathway_graph = sequence_graph_to_pathway_graph(sequence_graph)
@@ -294,9 +334,57 @@ class MainUI(QObject):  # Not a widget
             self._plot_sequence_graph(sequence_graph)
             self._plot_pathway_graph(pathway_graph)
             self._plot_pathway_map(pathway_map)
+            self._plot_pathway_classic_map(pathway_map)
         except LookupError as exception:
             self._clear_plots()
             self._log_message(str(exception))
+
+    def _read_from_dataset(self, dataset_pathname):
+        """
+        Read information from a dataset, replacing all information currently in the member
+        variables
+        """
+        # Don't overwrite variables, but replace their contents. The member variables are shared
+        # between the models. Overwriting variables by new instances would bread these connections.
+
+        actions, sequences, tipping_point_by_action, colour_by_action = read_dataset(
+            dataset_pathname
+        )
+
+        self.tipping_point_by_action.update(tipping_point_by_action)
+
+        colour_by_action_name = {
+            action.name: colour for action, colour in colour_by_action.items()
+        }
+
+        self.colour_by_action_name.clear()
+        self.colour_by_action_name.update(dict(colour_by_action_name.items()))
+
+        self._set_dataset_pathname(dataset_pathname)
+
+        self.actions.clear()
+        self.actions.extend([action] for action in actions)
+
+        self.sequences.clear()
+
+        if len(sequences) > 0:
+            root_actions = {
+                action
+                for action in tipping_point_by_action
+                if action not in [sequence[1] for sequence in sequences]
+            }
+            assert (
+                len(root_actions) == 1
+            ), f"Expected a single root action, but found {root_actions}"
+            root_action = root_actions.pop()
+            self.sequences.extend([[root_action, root_action]])
+
+        self.sequences.extend([[sequence[0], sequence[1]] for sequence in sequences])
+
+        # TODO try to use the model logic for this
+        self.ui.table_actions.model().layoutChanged.emit()
+        self.ui.table_sequences.model().layoutChanged.emit()
+        self._update_plots()
 
     @Slot()
     def _open_dataset(self):
@@ -308,48 +396,7 @@ class MainUI(QObject):  # Not a widget
         )
 
         if dataset_pathname:
-            # pylint: disable-next=unused-variable
-            actions, sequences, tipping_point_by_action, colour_by_action = (
-                dbms.read_dataset(dataset_pathname)
-            )
-
-            self.tipping_point_by_action.update(tipping_point_by_action)
-
-            colour_by_action_name = {
-                action.name: colour for action, colour in colour_by_action.items()
-            }
-
-            self.colour_by_action_name.clear()
-            self.colour_by_action_name.update(dict(colour_by_action_name.items()))
-
-            self._set_dataset_pathname(dataset_pathname)
-
-            self.actions.clear()
-            self.actions.extend([action] for action in actions)
-            # TODO try to use the model logic for this
-            self.ui.table_actions.model().layoutChanged.emit()
-
-            self.sequences.clear()
-
-            if len(sequences) > 0:
-                root_actions = {
-                    action
-                    for action in tipping_point_by_action
-                    if action not in [sequence[1] for sequence in sequences]
-                }
-                assert (
-                    len(root_actions) == 1
-                ), f"Expected a single root action, but found {root_actions}"
-                root_action = root_actions.pop()
-                self.sequences.extend([[root_action, root_action]])
-
-            self.sequences.extend(
-                [[sequence[0], sequence[1]] for sequence in sequences]
-            )
-            # TODO try to use the model logic for this
-            self.ui.table_sequences.model().layoutChanged.emit()
-
-            self._update_plots()
+            self._read_from_dataset(dataset_pathname)
 
     @handle_exceptions
     def _save_dataset(self, dataset_pathname: str):
@@ -482,6 +529,8 @@ class MainUI(QObject):  # Not a widget
         self._set_data_changed(True)
 
         self.ui.table_actions.model().layoutChanged.emit()
+        self._update_plots()
+
         self._edit_action(len(self.actions) - 1, default_values=True)
 
     @handle_exceptions
@@ -681,6 +730,12 @@ class MainUI(QObject):  # Not a widget
     ):  # pylint: disable=unused-argument
         self._update_plots()
 
+    def _sequences_moved(
+        self, logical_idx, old_visual_idx, new_visual_idx
+    ):  # pylint: disable=unused-argument
+        self.sequences.insert(new_visual_idx, self.sequences.pop(old_visual_idx))
+        self._update_plots()
+
     def _on_sequences_table_context_menu(self, pos):
         context = QtWidgets.QMenu(self.ui.table_sequences)
         sequence_idx = self.ui.table_sequences.rowAt(pos.y())
@@ -736,13 +791,13 @@ class MainUI(QObject):  # Not a widget
 
         self.sequences.append([from_action, to_action])
         self.tipping_point_by_action[to_action] = 0
+        self._set_data_changed(True)
         # TODO try to use the model logic for this
         self.ui.table_sequences.model().layoutChanged.emit()
+        self._update_plots()
 
         if len(self.sequences) > 1:
             self._edit_sequence(len(self.sequences) - 1)
-
-        self._update_plots()
 
     @handle_exceptions
     def _edit_sequence(
@@ -906,15 +961,15 @@ class MainUI(QObject):  # Not a widget
     def _show_about_dialog(self):
         dialog = loader.load(Path.ui("about_dialog.ui"), self.ui)
         dialog.setWindowTitle(f"About {self.name}")
-        dialog.text.setText("*Meh*!")
+        dialog.text.setText("*TODO*")
         dialog.show()
 
 
-def application():
+def application(basename_pathname: str = ""):
     # sys.excepthook = exception_handler
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(Path.icon("icon.svg")))
-    _ = MainUI()
+    _ = MainUI(basename_pathname)
     app.exec()
 
     return 0

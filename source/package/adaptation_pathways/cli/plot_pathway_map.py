@@ -34,7 +34,8 @@ def plot_map(basename_pathname: str, plot_pathname: str) -> int:
     sequence_graph = sequences_to_sequence_graph(sequences)
     pathway_map = sequence_graph_to_pathway_map(sequence_graph)
 
-    pathway_map.assign_tipping_points(tipping_point_by_action, verify=True)
+    if pathway_map.nr_nodes() > 0:
+        pathway_map.assign_tipping_points(tipping_point_by_action, verify=True)
     pathway_map.set_attribute("level_by_action", level_by_action)
     pathway_map.set_attribute("colour_by_action_name", colour_by_action_name)
 
