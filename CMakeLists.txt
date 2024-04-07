@@ -40,7 +40,7 @@ add_custom_target(logo
     COMMAND
         ${CMAKE_COMMAND} -E env "PYTHONPATH=${AP_PYTHONPATH}"
             # Creates logo.{pdf,svg}
-            ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/source/script/ap_create_logo.py logo
+            ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/environment/create_logo.py logo
 )
 
 add_custom_target(icon

@@ -5,4 +5,9 @@ Use
    :maxdepth: 1
 
    Get started <get_started>
-   Examples <example/index>
+   Import / export <import_export>
+   Plotting pathways <plot>
+   Pathway generator <generator>
+
+
+.. image:: generator.png

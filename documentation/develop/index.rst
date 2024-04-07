@@ -7,8 +7,6 @@ Develop
    Development environment <environment>
    Create a release <release>
    Use of Git <git>
-   API <../api/modules>
-   Index <../genindex>
    Examples <example/index>
 
 

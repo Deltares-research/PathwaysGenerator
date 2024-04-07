@@ -1,5 +1,6 @@
 Examples
 ========
-Some of the examples use io.StringIO to be able to treat a string as a file. When using
-``ap_plot_graphs`` to plot graphs, the name of a file can be passed containing similar content
-as shown in the examples.
+
+This section contains examples for plotting graphs using the ``adaptation_pathways``
+package. The same plots can be created by storing the information about the actions and sequences
+in a text- or binary-formatted dataset and using the ``ap_plot_graphs`` command.

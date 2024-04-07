@@ -1,13 +1,13 @@
 """
-An action (AKA policy action, intervention, and measure) is ...
-
-This module contains the implementation of the :py:class:`Action` class.
+An action is a synonym for policy action, intervention, and measure, for example.
 """
 
 
 class Action:
     """
-    Action instances represent ...
+    Actions are simply represented by a name
+
+    :param name: Name of the action. It is assumed that different actions have different names.
     """
 
     _name: str
@@ -20,9 +20,6 @@ class Action:
 
     def __repr__(self) -> str:
         return f'Action("{self._name}")'
-
-    def __lt__(self, other) -> bool:
-        return hash(self) < hash(other)
 
     @property
     def name(self) -> str:

@@ -7,6 +7,8 @@ Adaptation Pathways
 
    User manual <use/index>
    Developer manual <develop/index>
+   API <api/modules>
+   Index <genindex>
    Glossary <glossary>
    Changelog <changelog>
 

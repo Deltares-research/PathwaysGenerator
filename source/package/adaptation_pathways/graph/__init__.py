@@ -1,3 +1,8 @@
+"""
+This sub-package contains code for representing graphs and converting from one kind of graph
+to another.
+"""
+
 from .conversion import (
     pathway_graph_to_pathway_map,
     sequence_graph_to_pathway_graph,

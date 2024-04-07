@@ -1,7 +1,15 @@
 Get started
 ===========
 
-The software can be used by performing these steps in turn:
+Here, we assume that you want to get started using the ``adaptation_pathways`` Python package
+distributed as a so-called Python Wheel. There are other ways the package can be distributed,
+for example as a portable application, containing the Pathway Generator GUI application and all
+its dependencies. Installing that package is simply a matter of unzipping the file. The advantage
+is the simplicity to get the Pathway Generator application up and running, but to be able to
+use all functionality from the ``adaptation_pathways`` package, the Wheel should be installed
+as described on the rest of this page.
+
+The ``adaptation_pathways`` Python package can be used by performing these steps in turn:
 
 #. Create and activate a new virtual environment. There are multiple options for this. Below
    we show how to setup a virtual environment using Python's built-in venv module and using Conda.
