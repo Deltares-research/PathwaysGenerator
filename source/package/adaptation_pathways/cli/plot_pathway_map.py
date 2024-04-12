@@ -24,9 +24,6 @@ def plot_map(basename_pathname: str, plot_pathname: str) -> int:
         action.name: colour for action, colour in colour_by_action.items()
     }
 
-    _, axes = plt.subplots(layout="constrained")
-    init_axes(axes)
-
     level_by_action = action_level_by_first_occurrence(sequences)
     sequence_graph = SequenceGraph(sequences)
     pathway_map = sequence_graph_to_pathway_map(sequence_graph)
@@ -36,6 +33,8 @@ def plot_map(basename_pathname: str, plot_pathname: str) -> int:
     pathway_map.set_attribute("level_by_action", level_by_action)
     pathway_map.set_attribute("colour_by_action_name", colour_by_action_name)
 
+    _, axes = plt.subplots(layout="constrained")
+    init_axes(axes)
     plot_classic_pathway_map(axes, pathway_map, title="Pathway map")
     save_plot(plot_pathname)
 

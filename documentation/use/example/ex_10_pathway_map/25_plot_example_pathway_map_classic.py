@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 
 from adaptation_pathways.graph import SequenceGraph, sequence_graph_to_pathway_map
 from adaptation_pathways.io import text
-from adaptation_pathways.plot import action_level_by_first_occurrence, init_axes
-from adaptation_pathways.plot import plot_classic_pathway_map as plot
+from adaptation_pathways.plot import (
+    action_level_by_first_occurrence,
+    init_axes,
+    plot_classic_pathway_map,
+)
 
 
 actions, colour_by_action = text.read_actions(
@@ -65,5 +68,5 @@ pathway_map.set_attribute("colour_by_action_name", colour_by_action_name)
 
 _, axes = plt.subplots(layout="constrained")
 init_axes(axes)
-plot(axes, pathway_map)
+plot_classic_pathway_map(axes, pathway_map)
 plt.show()

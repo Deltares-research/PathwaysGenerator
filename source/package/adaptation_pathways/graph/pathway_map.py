@@ -47,6 +47,17 @@ class PathwayMap(RootedGraph):
 
         return result
 
+    def all_action_ends(self) -> list[ActionEnd]:
+        assert isinstance(self.root_node, ActionBegin)
+
+        result = []
+
+        for node in self.all_to_nodes(self.root_node):
+            if isinstance(node, ActionEnd):
+                result.append(node)
+
+        return result
+
     def actions(self) -> list[Action]:
         return (
             list(dict.fromkeys(begin.action for begin in self.all_action_begins()))
@@ -111,6 +122,17 @@ class PathwayMap(RootedGraph):
 
         if verify:
             verify_tipping_points(self)
+
+    def tipping_points(self) -> list[int]:
+        """
+        Return all unique tipping points, in increasing order
+        """
+        result: list[int] = []
+
+        for action_end in self.all_action_ends():
+            result.append(action_end.tipping_point)
+
+        return list(dict.fromkeys(result))
 
     def tipping_point_range(self) -> tuple[int, int]:
         result = (0, 0)

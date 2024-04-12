@@ -9,7 +9,7 @@ from ...graph import PathwayMap
 from ...graph.node import ActionBegin, Node
 from ..colour import PlotColours
 from ..util import add_position
-from ._colour import default_colours
+from .colour import default_colours
 
 
 # pylint: disable=too-many-arguments
@@ -239,10 +239,16 @@ def _configure_axes(axes, pathway_map, layout, title, plot_colours):
     _hide_spines(axes)
 
     if len(layout) > 0:
-        _update_data_limits(
-            axes,
-            coordinates=np.concatenate(list(layout.values())).reshape(len(layout), 2),
-        )
+        coordinates = np.concatenate(list(layout.values())).reshape(len(layout), 2)
+        _update_data_limits(axes, coordinates)
+
+        x_ticks = axes.get_xticks()
+
+        if len(x_ticks) > 0:
+            x_ticks = x_ticks[1:]
+
+        x_labels = [f"{int(tick)}" for tick in x_ticks]
+        axes.set_xticks(x_ticks, labels=x_labels)
 
     axes.autoscale_view()
 

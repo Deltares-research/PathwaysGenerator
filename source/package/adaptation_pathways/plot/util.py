@@ -1,4 +1,7 @@
-import enum
+"""
+This module contains utilities used for plotting graphs
+"""
+
 import itertools
 import typing
 
@@ -11,10 +14,12 @@ from ..action import Action
 from .colour import PlotColours
 
 
-PathwayMapLayout = enum.Enum("PathwayMapLayout", ["DEFAULT", "CLASSIC"])
-
-
 def init_axes(axes: mpl.axes.Axes) -> None:
+    """
+    Initializes the axes
+
+    Spines and ticks are hidden.
+    """
 
     axes.spines.top.set_visible(False)
     axes.spines.right.set_visible(False)
@@ -35,26 +40,13 @@ def plot_graph(
     layout: dict[typing.Any, np.ndarray],
     plot_colours: PlotColours,
 ) -> None:
-    # plt.rc(
-    #     "axes.spines", **{"bottom": False, "left": False, "right": False, "top": False}
-    # )
-
-    # draw_options = {
-    #     "with_labels": True,
-    #     "font_size": "small",
-    #     "font_weight": "bold",
-    # }
-
-    # _, axes = plt.subplots(layout="constrained")
-
+    """
+    Plot the graph using NetworkX plotting routines
+    """
     title = title.strip()
 
     if len(title) > 0:
         axes.set_title(title)
-
-    # nx.draw_networkx(
-    #     graph, pos=layout, node_color=node_colours, edge_color=edge_colours, **draw_options
-    # )
 
     nx.draw_networkx_edges(
         graph,
@@ -63,7 +55,6 @@ def plot_graph(
         edge_color=plot_colours.edge_colours,
         width=1.0,
         arrows=False,
-        # style="dashed",
     )
 
     nx.draw_networkx_nodes(
@@ -89,6 +80,11 @@ def plot_graph(
 
 
 def save_plot(pathname: str) -> None:
+    """
+    Save the current matplotlib plot to a file
+
+    Transparency will be set.
+    """
     plt_options = {
         # "bbox_inches": "tight",
         "transparent": True,
@@ -123,12 +119,20 @@ def add_position(
     node: typing.Any,
     position: tuple[float, float],
 ) -> None:
+    """
+    Add position of a node to the collection
+
+    Note that the collection passed in is updated.
+    """
     position_by_node[node] = np.array(position, np.float64)
 
 
 def sort_horizontally(
     nodes: list[typing.Any], position_by_node: dict[typing.Any, np.ndarray]
 ) -> tuple[list[typing.Any], list[float]]:
+    """
+    Sort all nodes by x-coordinate and return the sorted nodes and their x-coordinates
+    """
     sorted_nodes: list[typing.Any] = []
     x_coordinates = []
 

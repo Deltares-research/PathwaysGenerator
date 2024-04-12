@@ -10,7 +10,7 @@ Plotting pathways
 The package contains two command-line applications. One is called ``ap_plot_graphs`` and can
 be used to gain insight into various kinds of graphs used to store information about pathways,
 and one is called ``ap_plot_pathway_map`` and can be used to visualize pathway maps in the
-so-called :const:`CLASSIC <adaptation_pathways.plot.util.PathwayMapLayout.CLASSIC>` layout.
+so-called :const:`CLASSIC <adaptation_pathways.plot.pathway_map.plot.PathwayMapLayout.CLASSIC>` layout.
 
 
 ``ap_plot_graphs``
@@ -23,7 +23,7 @@ See also:
 
 This command takes information about pathways as input, and outputs a plot of the sequence
 graph, a plot of the pathway graph and a plot of the pathway map in :const:`DEFAULT
-<adaptation_pathways.plot.util.PathwayMapLayout.DEFAULT>` layout.
+<adaptation_pathways.plot.pathway_map.plot.PathwayMapLayout.DEFAULT>` layout.
 
 Example for creating plots from ``my_pathways-action.txt`` and ``my_pathways-sequence.txt``
 (or ``my_pathways.apw``) to ``./my_pathways-sequence_graph.pdf``,
@@ -43,7 +43,7 @@ See also:
 :class:`PathwayMap <adaptation_pathways.graph.pathway_map.PathwayMap>`
 
 This command takes information about pathways as input, and outputs a single plot containing
-the pathway map in :const:`CLASSIC <adaptation_pathways.plot.util.PathwayMapLayout.CLASSIC>`
+the pathway map in :const:`CLASSIC <adaptation_pathways.plot.pathway_map.plot.PathwayMapLayout.CLASSIC>`
 layout.
 
 Example for creating a plot from ``my_pathways-action.txt`` and ``my_pathways-sequence.txt``

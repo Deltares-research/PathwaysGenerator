@@ -1,14 +1,33 @@
+"""
+This module contains code related to colours
+
+Default colours are all taken from the `Nord theme palettes <https://www.nordtheme.com>`_.
+"""
+
 from dataclasses import dataclass
 
 from ..graph import PathwayGraph, PathwayMap, SequenceGraph
 
 
 Colour = tuple[float, float, float, float]
+"""
+A colour is represented by four floating point values [0, 1], representing RGBA values respectively
+"""
+
 Colours = list[Colour]
 
 
 @dataclass
 class PlotColours:
+    """
+    This class aggregates colours used when plotting graphs
+
+    :param node_colours: Fill colours for nodes
+    :param edge_colours: Line colours for edges
+    :param node_edge_colours: Line colours for node outline
+    :param label_colour: Label colour for labels
+    """
+
     node_colours: Colours | None = None
     edge_colours: Colours | None = None
     node_edge_colours: Colours | None = None
@@ -21,7 +40,12 @@ nord_palette_nominal = [
     (235 / 255, 203 / 255, 139 / 255, 1.0),  # Dark yellow
     (163 / 255, 190 / 255, 140 / 255, 1.0),  # Green
     (180 / 255, 142 / 255, 173 / 255, 1.0),  # Purple
+    (143 / 255, 188 / 255, 187 / 255, 1.0),  # Calm, frozen polar water
 ]
+"""
+Colours to use for nominal values
+"""
+
 
 nord_palette_dark = [
     (46 / 255, 52 / 255, 64 / 255, 1.0),  # Dark
@@ -29,12 +53,20 @@ nord_palette_dark = [
     (67 / 255, 76 / 255, 94 / 255, 1.0),  # Lighter than nord1
     (76 / 255, 86 / 255, 106 / 255, 1.0),  # Lighter than nord2
 ]
+"""
+Various shades of dark colours
+"""
+
 
 nord_palette_light = [
     (216 / 255, 222 / 255, 233 / 255, 1.0),  # Bright
     (229 / 255, 233 / 255, 240 / 255, 1.0),  # Lighter than nord4
     (236 / 255, 239 / 255, 244 / 255, 1.0),  # Lighter than nord5
 ]
+"""
+Various shades of light colours
+"""
+
 
 nord_palette_blue = [
     (143 / 255, 188 / 255, 187 / 255, 1.0),  # Calm, frozen polar water
@@ -42,18 +74,24 @@ nord_palette_blue = [
     (129 / 255, 161 / 255, 193 / 255, 1.0),  # Darkened, arctic waters
     (94 / 255, 129 / 255, 172 / 255, 1.0),  # Dark, deep arctic ocean
 ]
+"""
+Various shades of blue colours
+"""
 
 
 def default_nominal_palette() -> Colours:
-    palette = nord_palette_nominal
-    palette.append(nord_palette_blue[0])
-
-    return palette
+    """
+    Return the default palette with nominal colours
+    """
+    return nord_palette_nominal
 
 
 def default_edge_colours(
     graph: SequenceGraph | PathwayGraph,
 ) -> Colours:
+    """
+    For each edge in the graph, return a colour
+    """
     colour = nord_palette_dark[3]
     colours = [colour] * len(list(graph.graph.edges))
 
@@ -63,6 +101,9 @@ def default_edge_colours(
 def default_node_edge_colours(
     graph: SequenceGraph | PathwayGraph | PathwayMap,
 ) -> Colours:
+    """
+    For each edge in the graph, return a colour
+    """
     colour = nord_palette_dark[3]
     colours = [colour] * len(list(graph.graph.edges))
 
@@ -70,23 +111,37 @@ def default_node_edge_colours(
 
 
 def default_node_colour() -> Colour:
+    """
+    Return the default node colour
+    """
     return nord_palette_dark[3]
 
 
 def default_label_colour() -> Colour:
+    """
+    Return the default label colour
+    """
     return nord_palette_dark[0]
 
 
 def default_action_colours(nr_actions: int) -> Colours:
+    """
+    For each action, return a colour
+    """
     colours: Colours = []
 
     while len(colours) < nr_actions:
+        # Append the whole palette as many times as needed
         colours += default_nominal_palette()
 
+    # Return the requested number of colours
     return colours[:nr_actions]
 
 
 def rgba_to_hex(colour: Colour) -> str:
+    """
+    Return the hex representation of the colour in RGBA representation
+    """
     r = int(colour[0] * 255)
     g = int(colour[1] * 255)
     b = int(colour[2] * 255)
@@ -97,6 +152,9 @@ def rgba_to_hex(colour: Colour) -> str:
 
 
 def hex_to_rgba(colour: str) -> Colour:
+    """
+    Return the RGBA representation of the colour in hex representation
+    """
     assert len(colour) == 9, colour
     assert colour[0] == "#", colour
     colour = colour[1:]

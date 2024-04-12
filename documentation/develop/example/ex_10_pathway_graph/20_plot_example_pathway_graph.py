@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 
 from adaptation_pathways.graph import SequenceGraph, sequence_graph_to_pathway_graph
 from adaptation_pathways.io import text
-from adaptation_pathways.plot import init_axes
-from adaptation_pathways.plot import plot_default_pathway_graph as plot
+from adaptation_pathways.plot import init_axes, plot_default_pathway_graph
 
 
 actions, colour_by_action = text.read_actions(
@@ -56,5 +55,5 @@ pathway_graph.set_attribute("colour_by_action_name", colour_by_action_name)
 
 _, axes = plt.subplots(layout="constrained")
 init_axes(axes)
-plot(axes, pathway_graph)
+plot_default_pathway_graph(axes, pathway_graph)
 plt.show()

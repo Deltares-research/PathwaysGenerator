@@ -11,4 +11,11 @@ def plot_pathway_graph(
     title: str = "",
     plot_colours: PlotColours | None = None,
 ) -> None:
+    """
+    Plot a pathway graph
+
+    Currently, this function plots using the default layout.
+
+    See also: :func:`default.plot <adaptation_pathways.plot.pathway_graph.default.plot>`
+    """
     plot_default(axes, pathway_graph, title, plot_colours)

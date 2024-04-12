@@ -7,7 +7,7 @@ from ...graph import PathwayGraph
 from ...graph.node import Node
 from ..colour import PlotColours
 from ..util import add_position, distribute, plot_graph, sort_horizontally
-from ._colour import default_colours
+from .colour import default_colours
 
 
 def _distribute_horizontally(
