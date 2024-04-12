@@ -5,8 +5,8 @@ import numpy as np
 
 from ...action import Action
 from ...action_combination import ActionCombination
+from ...graph import PathwayMap
 from ...graph.node import ActionBegin, Node
-from ...graph.pathway_map import PathwayMap
 from ..colour import PlotColours
 from ..util import add_position
 from ._colour import default_colours

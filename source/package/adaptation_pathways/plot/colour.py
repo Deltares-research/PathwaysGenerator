@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from ..graph.pathway_graph import PathwayGraph
-from ..graph.pathway_map import PathwayMap
-from ..graph.sequence_graph import SequenceGraph
+from ..graph import PathwayGraph, PathwayMap, SequenceGraph
 
 
 Colour = tuple[float, float, float, float]

@@ -1,6 +1,6 @@
 """
 Action combinations are combinations of other actions. They are a special kind of action that
-keeps track of which actions are combined. Code for visualizing graphs containing action
+keep track of which actions are combined. Code for visualizing graphs containing action
 combinations can use this information to do things differently compared to regular actions.
 """
 

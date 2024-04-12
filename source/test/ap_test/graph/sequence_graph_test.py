@@ -1,8 +1,8 @@
 import unittest
 
 from adaptation_pathways.action import Action
+from adaptation_pathways.graph import SequenceGraph
 from adaptation_pathways.graph.node import Action as ActionNode
-from adaptation_pathways.graph.sequence_graph import SequenceGraph
 
 
 class SequenceGraphTest(unittest.TestCase):

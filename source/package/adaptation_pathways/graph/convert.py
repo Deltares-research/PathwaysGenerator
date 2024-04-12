@@ -1,4 +1,3 @@
-from ..action import Action
 from .node import ActionBegin, ActionEnd, ActionPeriod
 from .node.action import Action as ActionNode
 from .pathway_graph import PathwayGraph
@@ -6,23 +5,11 @@ from .pathway_map import PathwayMap
 from .sequence_graph import SequenceGraph
 
 
-def sequences_to_sequence_graph(
-    sequences: list[tuple[Action, Action]]
-) -> SequenceGraph:
-    sequence_graph = SequenceGraph()
-
-    node_by_action: dict[Action, ActionNode] = {}
-
-    for from_action, to_action in sequences:
-        sequence_graph.add_sequence(
-            node_by_action.setdefault(from_action, ActionNode(from_action)),
-            node_by_action.setdefault(to_action, ActionNode(to_action)),
-        )
-
-    return sequence_graph
-
-
 def sequence_graph_to_pathway_graph(sequence_graph: SequenceGraph) -> PathwayGraph:
+    """
+    Convert a sequence graph to a pathway graph
+    """
+
     def visit_graph(
         sequence_graph: SequenceGraph,
         pathway_graph: PathwayGraph,
@@ -47,6 +34,10 @@ def sequence_graph_to_pathway_graph(sequence_graph: SequenceGraph) -> PathwayGra
 
 
 def pathway_graph_to_pathway_map(pathway_graph: PathwayGraph) -> PathwayMap:
+    """
+    Convert a pathway graph to a pathway map
+    """
+
     def visit_graph(
         pathway_graph: PathwayGraph,
         pathway_map: PathwayMap,
@@ -80,4 +71,10 @@ def pathway_graph_to_pathway_map(pathway_graph: PathwayGraph) -> PathwayMap:
 
 
 def sequence_graph_to_pathway_map(sequence_graph: SequenceGraph) -> PathwayMap:
+    """
+    Convert a sequence graph to a pathway map
+
+    This function calls :func:`sequence_graph_to_pathway_graph` and
+    :func:`pathway_graph_to_pathway_map` in turn.
+    """
     return pathway_graph_to_pathway_map(sequence_graph_to_pathway_graph(sequence_graph))

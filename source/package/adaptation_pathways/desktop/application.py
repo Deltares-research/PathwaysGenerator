@@ -18,7 +18,6 @@ from ..graph import (
     SequenceGraph,
     pathway_graph_to_pathway_map,
     sequence_graph_to_pathway_graph,
-    sequences_to_sequence_graph,
 )
 from ..io import sqlite as dbms
 from ..io.dataset import read_dataset
@@ -327,7 +326,7 @@ class MainUI(QObject):  # Not a widget
                 assert len(root_actions) == 1, "expected single root action"
                 sequences.pop(sequences.index(root_actions[0]))
 
-            sequence_graph = sequences_to_sequence_graph(sequences)
+            sequence_graph = SequenceGraph(sequences)
             pathway_graph = sequence_graph_to_pathway_graph(sequence_graph)
             pathway_map = pathway_graph_to_pathway_map(pathway_graph)
 

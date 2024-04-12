@@ -3,12 +3,11 @@ This sub-package contains code for representing graphs and converting from one k
 to another.
 """
 
-from .conversion import (
+from .convert import (
     pathway_graph_to_pathway_map,
     sequence_graph_to_pathway_graph,
     sequence_graph_to_pathway_map,
-    sequences_to_sequence_graph,
 )
 from .pathway_graph import PathwayGraph
-from .pathway_map import PathwayMap
+from .pathway_map import PathwayMap, verify_tipping_points
 from .sequence_graph import SequenceGraph

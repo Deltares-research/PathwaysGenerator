@@ -1,3 +1,4 @@
+from ..action import Action
 from .node.action import Action as ActionNode
 from .rooted_graph import RootedGraph
 
@@ -7,6 +8,24 @@ class SequenceGraph(RootedGraph):
     A SequenceGraph represents the dependencies between actions. Each node represents an action,
     and each edge the fact that one action follows another one.
     """
+
+    def __init__(self, sequences: list[tuple[Action, Action]] | None = None) -> None:
+        """
+        Create a sequence graph, based on a collection of sequences
+
+        Each of the actions in the sequences passed in is associated with a node in the graph.
+        The same action is associated with the same node.
+        """
+        super().__init__()
+
+        if sequences is not None:
+            node_by_action: dict[Action, ActionNode] = {}
+
+            for from_action, to_action in sequences:
+                self.add_sequence(
+                    node_by_action.setdefault(from_action, ActionNode(from_action)),
+                    node_by_action.setdefault(to_action, ActionNode(to_action)),
+                )
 
     def add_action(self, action: ActionNode) -> None:
         """

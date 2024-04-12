@@ -3,8 +3,8 @@ import itertools
 import matplotlib as mpl
 import numpy as np
 
+from ...graph import PathwayMap
 from ...graph.node import ActionBegin, Node
-from ...graph.pathway_map import PathwayMap
 from ..colour import PlotColours
 from ..util import add_position, distribute, plot_graph, sort_horizontally
 from ._colour import default_colours

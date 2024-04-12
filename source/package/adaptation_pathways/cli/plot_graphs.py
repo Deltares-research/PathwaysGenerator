@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 import adaptation_pathways as ap
 
-from ..graph import PathwayGraph, PathwayMap, SequenceGraph, sequences_to_sequence_graph
+from ..graph import PathwayGraph, PathwayMap, SequenceGraph
 from ..io.dataset import read_dataset
 from ..plot import (
     init_axes,
@@ -56,7 +56,7 @@ def plot_graphs(
     basename = os.path.splitext(os.path.basename(basename_pathname))[0]
     assert os.path.isdir(plots_prefix_pathname), plots_prefix_pathname
 
-    sequence_graph = sequences_to_sequence_graph(sequences)
+    sequence_graph = SequenceGraph(sequences)
     sequence_graph.set_attribute("colour_by_action_name", colour_by_action_name)
     plot_pathname = os.path.join(
         plots_prefix_pathname, f"{basename}-sequence_graph.{output_format}"

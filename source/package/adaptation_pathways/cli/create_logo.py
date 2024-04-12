@@ -5,7 +5,7 @@ from io import StringIO
 import docopt
 import matplotlib.pyplot as plt
 
-from ..graph import conversion
+from ..graph import SequenceGraph, sequence_graph_to_pathway_map
 from ..io import text
 from ..plot import init_axes, plot_classic_pathway_map, save_plot
 from ..plot.util import action_level_by_first_occurrence
@@ -37,8 +37,8 @@ def create_logo(plot_pathname: str) -> int:
         ),
         actions,
     )
-    sequence_graph = conversion.sequences_to_sequence_graph(sequences)
-    pathway_map = conversion.sequence_graph_to_pathway_map(sequence_graph)
+    sequence_graph = SequenceGraph(sequences)
+    pathway_map = sequence_graph_to_pathway_map(sequence_graph)
 
     level_by_action = action_level_by_first_occurrence(sequences)
     colour_by_action_name = {

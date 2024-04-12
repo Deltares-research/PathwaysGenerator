@@ -4,10 +4,7 @@ import sys
 import docopt
 import matplotlib.pyplot as plt
 
-from ..graph.conversion import (
-    sequence_graph_to_pathway_map,
-    sequences_to_sequence_graph,
-)
+from ..graph import SequenceGraph, sequence_graph_to_pathway_map
 from ..io.dataset import read_dataset
 from ..plot import init_axes, plot_classic_pathway_map, save_plot
 from ..plot.util import action_level_by_first_occurrence
@@ -31,7 +28,7 @@ def plot_map(basename_pathname: str, plot_pathname: str) -> int:
     init_axes(axes)
 
     level_by_action = action_level_by_first_occurrence(sequences)
-    sequence_graph = sequences_to_sequence_graph(sequences)
+    sequence_graph = SequenceGraph(sequences)
     pathway_map = sequence_graph_to_pathway_map(sequence_graph)
 
     if pathway_map.nr_nodes() > 0:

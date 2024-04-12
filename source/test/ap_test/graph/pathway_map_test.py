@@ -1,12 +1,15 @@
 import unittest
 
 from adaptation_pathways.action import Action
-from adaptation_pathways.graph.conversion import sequence_graph_to_pathway_map
+from adaptation_pathways.graph import (
+    PathwayMap,
+    SequenceGraph,
+    sequence_graph_to_pathway_map,
+    verify_tipping_points,
+)
 from adaptation_pathways.graph.node.action import Action as ActionNode
 from adaptation_pathways.graph.node.action_begin import ActionBegin
 from adaptation_pathways.graph.node.action_end import ActionEnd
-from adaptation_pathways.graph.pathway_map import PathwayMap, verify_tipping_points
-from adaptation_pathways.graph.sequence_graph import SequenceGraph
 
 
 # pylint: disable=too-many-locals

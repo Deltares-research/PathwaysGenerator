@@ -1,5 +1,5 @@
+from ...graph import PathwayGraph
 from ...graph.node import ActionConversion, ActionPeriod
-from ...graph.pathway_graph import PathwayGraph
 from ..colour import (
     Colour,
     Colours,

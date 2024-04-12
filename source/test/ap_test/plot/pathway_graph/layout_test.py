@@ -4,9 +4,8 @@ import numpy.testing as npt
 
 from adaptation_pathways.action import Action
 from adaptation_pathways.action_combination import ActionCombination
-from adaptation_pathways.graph.conversion import sequence_graph_to_pathway_graph
+from adaptation_pathways.graph import SequenceGraph, sequence_graph_to_pathway_graph
 from adaptation_pathways.graph.node import Action as ActionNode
-from adaptation_pathways.graph.sequence_graph import SequenceGraph
 from adaptation_pathways.plot.pathway_graph.default import _layout as default_layout
 
 

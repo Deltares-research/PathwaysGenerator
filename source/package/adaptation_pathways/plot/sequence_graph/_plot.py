@@ -1,6 +1,6 @@
 import matplotlib as mpl
 
-from ...graph.sequence_graph import SequenceGraph
+from ...graph import SequenceGraph
 from ..colour import PlotColours
 from .default import plot as plot_default
 

@@ -5,13 +5,12 @@ import numpy.testing as npt
 
 from adaptation_pathways.action import Action
 from adaptation_pathways.action_combination import ActionCombination
-from adaptation_pathways.graph.conversion import (
+from adaptation_pathways.graph import (
+    PathwayMap,
+    SequenceGraph,
     sequence_graph_to_pathway_map,
-    sequences_to_sequence_graph,
 )
 from adaptation_pathways.graph.node import Action as ActionNode
-from adaptation_pathways.graph.pathway_map import PathwayMap
-from adaptation_pathways.graph.sequence_graph import SequenceGraph
 from adaptation_pathways.io.text import (  # specialize_action_instances,
     read_actions,
     read_sequences,
@@ -30,7 +29,7 @@ def configure_pathway_map(actions_str: str, sequences_str: str) -> PathwayMap:
     # sequences = specialize_action_instances(sequences, actions)
     level_by_action = action_level_by_first_occurrence(sequences)
 
-    sequence_graph = sequences_to_sequence_graph(sequences)
+    sequence_graph = SequenceGraph(sequences)
     pathway_map = sequence_graph_to_pathway_map(sequence_graph)
 
     pathway_map.assign_tipping_points(tipping_points)

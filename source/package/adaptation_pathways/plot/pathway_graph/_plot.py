@@ -1,6 +1,6 @@
 import matplotlib as mpl
 
-from ...graph.pathway_graph import PathwayGraph
+from ...graph import PathwayGraph
 from ..colour import PlotColours
 from .default import plot as plot_default
 

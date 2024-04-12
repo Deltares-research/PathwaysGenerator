@@ -1,5 +1,5 @@
+from ...graph import SequenceGraph
 from ...graph.node import Action as ActionNode
-from ...graph.sequence_graph import SequenceGraph
 from ..colour import (
     Colour,
     Colours,

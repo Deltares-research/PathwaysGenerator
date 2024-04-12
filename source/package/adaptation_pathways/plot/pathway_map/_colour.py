@@ -1,5 +1,5 @@
+from ...graph import PathwayMap
 from ...graph.node import ActionBegin, ActionEnd
-from ...graph.pathway_map import PathwayMap
 from ..colour import (
     Colour,
     Colours,
