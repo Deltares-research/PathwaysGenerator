@@ -4,7 +4,7 @@ from pathlib import Path
 
 import docopt
 
-from ..io import sqlite, text
+from ..io import binary, text
 from ..version import __version__ as version
 from .main import main_function
 
@@ -16,7 +16,7 @@ def import_(basename_pathname: str, dataset_pathname: str) -> int:
         basename_pathname
     )
 
-    sqlite.write_dataset(
+    binary.write_dataset(
         actions,
         sequences,
         tipping_point_by_action,

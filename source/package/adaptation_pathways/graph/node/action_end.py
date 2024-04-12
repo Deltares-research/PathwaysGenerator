@@ -9,11 +9,15 @@ TippingPoint: TypeAlias = int
 
 class ActionEnd(Node):
     """
+    A node representing the end of an action
+
     :param action: Action this node is the end of
     :param tipping_point: Tipping point
 
     Tipping points are numerical values with unknown meaning. They may represent years or
     magnitudes of some environmental condition, for example.
+
+    See also: :class:`PathwayMap`
     """
 
     _tipping_point: TippingPoint

@@ -1,9 +1,3 @@
-"""
-An ActionConversion is ...
-
-This module contains the implementation of the :py:class:`ActionConversion` class.
-"""
-
 from .action_period import ActionPeriod
 from .node import Node
 
@@ -13,9 +7,10 @@ class ActionConversion(Node):
     ActionConversion instances represent the moment that one action stops and another action
     begins
 
-    :param label: Label of the conversion
     :param from_action_period: Previous / old action period
     :param to_action_period: Next / new action period
+
+    See also: :class:`PathwayMap`
     """
 
     def __init__(

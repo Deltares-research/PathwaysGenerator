@@ -1,5 +1,5 @@
 from .. import alias
-from . import sqlite, text
+from . import binary, text
 
 
 def read_dataset(
@@ -7,13 +7,24 @@ def read_dataset(
 ) -> tuple[
     alias.Actions, alias.Sequences, alias.TippingPointByAction, alias.ColourByAction
 ]:
-    sqlite_dataset_exists = sqlite.dataset_exists(basename_pathname)
+    """
+    Read a dataset and return the contents
+
+    :raises RuntimeError: In case an error occurred
+
+    This function supports reading information from both the binary and text formats. First
+    the binary format is tried, and when that fails the text format is tried. If both binary
+    and text formatted datasets exist with the same name, then the contents from the binary
+    one are returned.
+    """
+
+    binary_dataset_exists = binary.dataset_exists(basename_pathname)
 
     try:
-        if sqlite.dataset_exists(basename_pathname):
+        if binary.dataset_exists(basename_pathname):
             # pylint: disable-next=unused-variable
             actions, sequences, tipping_point_by_action, colour_by_action = (
-                sqlite.read_dataset(basename_pathname)
+                binary.read_dataset(basename_pathname)
             )
         else:
             # pylint: disable-next=unused-variable
@@ -21,7 +32,7 @@ def read_dataset(
                 text.read_dataset(basename_pathname)
             )
     except Exception as exception:
-        if sqlite_dataset_exists:
+        if binary_dataset_exists:
             message = f"Error while reading binary dataset {basename_pathname}"
         else:
             message = (

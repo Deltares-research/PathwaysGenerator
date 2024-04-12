@@ -4,7 +4,7 @@ import matplotlib as mpl
 import numpy as np
 
 from ...graph import SequenceGraph
-from ...graph.node.action import Action
+from ...graph.node import Action
 from ..colour import PlotColours
 from ..util import add_position, distribute, plot_graph, sort_horizontally
 from ._colour import default_colours

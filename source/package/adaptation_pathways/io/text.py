@@ -1,3 +1,21 @@
+"""
+This sub-package contains the code for reading and writing to text formatted datasets
+
+A note about handling sequences and tipping points in software and in flat tables:
+Each sequences relate a from-action to a to-action. Tipping points relate a to-action to a
+tipping point. The first sequence (in time) is special. It represents the current situation:
+from a long long time ago to now. This sequence is not part of the collection of tipping points,
+because the action representing the current situation is not a to-action but a from-action:
+given the current situation, some other action will be implemented. For I/O purposes we use
+an extra sequence, representing this "root sequence". This allows us to keep the output as a
+simple table with::
+
+    |from-action | to-action | tipping point|
+
+records. For the special case of the "root action" in the "root sequence", the from-action
+and to-action are the same.
+"""
+
 import copy
 import io
 import re
@@ -13,7 +31,13 @@ edition_pattern = r"\d+"
 action_name_pattern = r"\w+"
 
 
-def open_stream(pathname: str | Path | io.IOBase) -> io.IOBase:
+def _open_stream(pathname: str | Path | io.IOBase) -> io.IOBase:
+    """
+    Return a stream corresponding to the instance passed in
+
+    If a pathname is passed in, then the file is opened and the result returned. In all other
+    cases, it is assumed that a stream was passed in, which is returned unchanged.
+    """
     stream: io.IOBase
 
     if isinstance(pathname, (str, Path)):
@@ -104,8 +128,13 @@ def _parse_action(line: str, action_by_name: dict[str, Action]) -> tuple[Action,
 def read_actions(
     actions_path: Path | io.IOBase,
 ) -> tuple[alias.Actions, alias.ColourByAction]:
+    """
+    Read file containing information about actions and return the contents
 
-    stream = open_stream(actions_path)
+    :raises ValueError: In case the contents are inconsistent
+    """
+
+    stream = _open_stream(actions_path)
     actions: alias.Actions = []
     action_by_name: dict[str, Action] = {}
     colour_by_action: alias.ColourByAction = {}
@@ -207,18 +236,9 @@ def read_sequences(
     Read sequences of actions and an optional tipping point from a stream and return the
     information read
 
-    :param sequences_path: Path of file to read from or an open stream to read from
-
-    Comments are supported: everything after the first pound sign (#) on a line is
-    skipped. Example::
-
-        # Diverging sequences
-        current a
-        current b
-        current c  # Third sequence
-        # Done specifying sequences
+    :raises ValueError: In case the contents are inconsistent
     """
-    stream = open_stream(sequences_path)
+    stream = _open_stream(sequences_path)
     sequences: alias.Sequences = []
     tipping_point_by_action: alias.TippingPointByAction = {}
     action_by_name_and_edition: dict[tuple[str, int], Action] = {}
@@ -299,6 +319,9 @@ def _format_action(action: Action | ActionCombination) -> str:
 def write_actions(
     actions: alias.Actions, colour_by_action: alias.ColourByAction, path: Path
 ) -> None:
+    """
+    Write information about actions to a file
+    """
     with open(path, "w", encoding="utf8") as file:
         for action in actions:
             file.write(
@@ -311,6 +334,9 @@ def write_sequences(
     tipping_point_by_action: alias.TippingPointByAction,
     path: Path,
 ) -> None:
+    """
+    Write information about sequences to a file
+    """
     with open(path, "w", encoding="utf8") as file:
         if len(sequences) > 0:
             root_actions = {
@@ -331,14 +357,6 @@ def write_sequences(
                 f"{_format_action(from_action)} {_format_action(to_action)} "
                 f"{tipping_point_by_action[to_action]}\n"
             )
-
-
-def write_tipping_points(
-    tipping_points: alias.TippingPointByAction, path: Path
-) -> None:
-    with open(path, "w", encoding="utf8") as file:
-        for action, tipping_point in tipping_points.items():
-            file.write(f"{_format_action(action)} {tipping_point}\n")
 
 
 def write_dataset(

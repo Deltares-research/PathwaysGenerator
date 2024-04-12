@@ -4,7 +4,7 @@ from pathlib import Path
 
 import docopt
 
-from ..io import sqlite, text
+from ..io import binary, text
 from ..version import __version__ as version
 from .main import main_function
 
@@ -12,7 +12,7 @@ from .main import main_function
 @main_function
 def export(dataset_pathname: str, basename_pathname: str) -> int:
 
-    actions, sequences, tipping_point_by_action, colour_by_action = sqlite.read_dataset(
+    actions, sequences, tipping_point_by_action, colour_by_action = binary.read_dataset(
         Path(dataset_pathname)
     )
 

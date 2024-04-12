@@ -7,9 +7,8 @@ from adaptation_pathways.graph import (
     sequence_graph_to_pathway_map,
     verify_tipping_points,
 )
-from adaptation_pathways.graph.node.action import Action as ActionNode
-from adaptation_pathways.graph.node.action_begin import ActionBegin
-from adaptation_pathways.graph.node.action_end import ActionEnd
+from adaptation_pathways.graph.node import Action as ActionNode
+from adaptation_pathways.graph.node import ActionBegin, ActionEnd
 
 
 # pylint: disable=too-many-locals

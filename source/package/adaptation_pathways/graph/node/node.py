@@ -1,6 +1,8 @@
 class Node:
     """
-    Node instances represent ...
+    Base class for specialized node types
+
+    Nodes are nodes in a graph.
 
     :param label: Label of the node
     """

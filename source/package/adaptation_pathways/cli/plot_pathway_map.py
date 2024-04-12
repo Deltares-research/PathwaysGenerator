@@ -5,7 +5,7 @@ import docopt
 import matplotlib.pyplot as plt
 
 from ..graph import SequenceGraph, sequence_graph_to_pathway_map
-from ..io.dataset import read_dataset
+from ..io import read_dataset
 from ..plot import init_axes, plot_classic_pathway_map, save_plot
 from ..plot.util import action_level_by_first_occurrence
 from ..version import __version__ as version

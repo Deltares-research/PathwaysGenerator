@@ -1,3 +1,5 @@
+.. _import_export:
+
 Import and export
 =================
 
@@ -11,6 +13,9 @@ Text format
 Information about pathways can be stored in two text files, named ``<basename>-action.txt``
 and ``<basename>-sequence.txt``. The ``<basename>`` part can be replaced by any name that makes
 sense to you.
+
+Comments are supported. A comment starts with a pound sign (``#``) and a space and can
+occur anywhere in a file.
 
 ``<basename>-action.txt``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +64,7 @@ be used as a continuation of the sequence ``current b`` as follows::
 
 Import from text format to binary format
 ----------------------------------------
-See also: :mod:`adaptation_pathways.cli.import_`
+See also: :mod:`adaptation_pathways.cli.import_`, :mod:`adaptation_pathways.io`
 
 Example for importing data from ``my_pathways-action.txt`` and ``my_pathways-sequence.txt`` to
 ``my_pathways.apw``:
@@ -73,7 +78,7 @@ For help about the usage of the command type ``ap_import --help``.
 
 Export from binary format to text format
 ----------------------------------------
-See also: :mod:`adaptation_pathways.cli.export`
+See also: :mod:`adaptation_pathways.cli.export`, :mod:`adaptation_pathways.io`
 
 Example for exporting data from ``my_pathways.apw`` to ``my_pathways-action.txt`` and
 ``my_pathways-sequence.txt``:

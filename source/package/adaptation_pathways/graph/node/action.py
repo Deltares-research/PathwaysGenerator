@@ -3,6 +3,12 @@ from .node import Node
 
 
 class Action(Node):
+    """
+    A node representing an action
+
+    :param action: Action instance represented by the node
+    """
+
     _action: Action_
 
     def __init__(self, action: Action_) -> None:

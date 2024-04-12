@@ -19,8 +19,7 @@ from ..graph import (
     pathway_graph_to_pathway_map,
     sequence_graph_to_pathway_graph,
 )
-from ..io import sqlite as dbms
-from ..io.dataset import read_dataset
+from ..io import binary, read_dataset
 from ..plot import (
     pathway_graph_node_colours,
     pathway_map_edge_colours,
@@ -432,7 +431,7 @@ class MainUI(QObject):  # Not a widget
             ] = colour
 
         try:
-            dbms.write_dataset(
+            binary.write_dataset(
                 actions,
                 sequences,
                 self.tipping_point_by_action,

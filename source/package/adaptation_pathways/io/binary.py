@@ -20,8 +20,8 @@ def normalize_database_path(database_path: Path | str) -> Path:
     """
     Perform a number of updates to the path passed in
 
-    - If the type is string, convert it to a Path
-    - If the path does not have a suffix, add the default one
+    - If the type is string, convert it to a :class:`pathlib.Path`
+    - If the path does not already have a suffix, add the default one
     """
     if isinstance(database_path, str):
         database_path = Path(database_path)
@@ -34,34 +34,13 @@ def normalize_database_path(database_path: Path | str) -> Path:
 
 
 def dataset_exists(database_path: Path | str) -> bool:
+    """
+    Return whether the database already exists
+    """
     return normalize_database_path(database_path).exists()
 
 
-def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
-    actions: alias.Actions,
-    sequences: alias.Sequences,
-    tipping_point_by_action: alias.TippingPointByAction,
-    colour_by_action: alias.ColourByAction,
-    database_path: Path | str,
-    *,
-    overwrite: bool = True,
-) -> None:
-    """
-    Save the information passed in to the database
-    """
-    assert len(colour_by_action) == len(actions), f"{colour_by_action} ↔ {actions}"
-
-    database_path = normalize_database_path(database_path)
-
-    if database_path.exists() and not overwrite:
-        raise RuntimeError(f"Database {database_path} already exists")
-
-    database_path.unlink(missing_ok=True)
-
-    connection = sqlite3.connect(database_path)
-    connection.execute("PRAGMA foreign_keys = 1")
-    connection.execute("PRAGMA ignore_check_constraints = 0")
-
+def _create_tables(connection):
     connection.execute(
         f"""
         CREATE TABLE {_action_table_name}
@@ -131,6 +110,16 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
         )
         """
     )
+
+
+def _insert_records(
+    connection,
+    actions: alias.Actions,
+    sequences: alias.Sequences,
+    tipping_point_by_action: alias.TippingPointByAction,
+    colour_by_action: alias.ColourByAction,
+) -> None:
+    # pylint: disable=too-many-locals
 
     action_id_by_name = {
         action.name: action_id for action_id, action in enumerate(actions)
@@ -324,6 +313,36 @@ def write_dataset(  # pylint: disable=too-many-locals, too-many-arguments
             plot_records,
         )
 
+
+def write_dataset(  # pylint: disable=too-many-arguments
+    actions: alias.Actions,
+    sequences: alias.Sequences,
+    tipping_point_by_action: alias.TippingPointByAction,
+    colour_by_action: alias.ColourByAction,
+    database_path: Path | str,
+    *,
+    overwrite: bool = True,
+) -> None:
+    """
+    Save the information passed in to the database
+    """
+    assert len(colour_by_action) == len(actions), f"{colour_by_action} ↔ {actions}"
+
+    database_path = normalize_database_path(database_path)
+
+    if database_path.exists() and not overwrite:
+        raise RuntimeError(f"Database {database_path} already exists")
+
+    database_path.unlink(missing_ok=True)
+
+    connection = sqlite3.connect(database_path)
+    connection.execute("PRAGMA foreign_keys = 1")
+    connection.execute("PRAGMA ignore_check_constraints = 0")
+
+    _create_tables(connection)
+    _insert_records(
+        connection, actions, sequences, tipping_point_by_action, colour_by_action
+    )
     connection.close()
 
 
@@ -342,7 +361,8 @@ def read_dataset(  # pylint: disable=too-many-locals
     connection = sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)
     connection.execute("PRAGMA foreign_keys = 1")
 
-    # TODO Use SQL for this?! We've got all relations set up. Use'm!
+    # Use SQL for this
+    # https://github.com/Deltares-research/PathwaysGenerator/issues/20
 
     action_data = list(
         connection.execute(

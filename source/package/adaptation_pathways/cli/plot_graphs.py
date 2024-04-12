@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import adaptation_pathways as ap
 
 from ..graph import PathwayGraph, PathwayMap, SequenceGraph
-from ..io.dataset import read_dataset
+from ..io import read_dataset
 from ..plot import (
     init_axes,
     plot_default_pathway_graph,
