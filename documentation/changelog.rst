@@ -11,6 +11,11 @@ Description of of all notable changes made per version.
 - Support writing and reading information about pathways to a binary file.
 - Support import / export between text and binary dataset formats. See ``ap_import`` and
   ``ap_export`` commands.
+- Visualize combinations of actions by dashed lines
+- Added documentations (manuals and API)
+- Moved repository to new location: https://github.com/Deltares-research/PathwaysGenerator
+- Configured continuous integration. Every time we make changes, the source code is checked
+  (style and functionality). https://github.com/Deltares-research/PathwaysGenerator/actions
 
 
 0.0.8
