@@ -23,7 +23,9 @@ from ..io import binary, read_dataset
 from ..plot import (
     pathway_graph_node_colours,
     pathway_map_edge_colours,
+    pathway_map_edge_styles,
     pathway_map_node_colours,
+    pathway_map_node_styles,
     plot_classic_pathway_map,
     plot_default_pathway_graph,
     plot_default_pathway_map,
@@ -31,11 +33,12 @@ from ..plot import (
     sequence_graph_node_colours,
 )
 from ..plot.colour import (
-    Colour,
     PlotColours,
     default_edge_colours,
+    default_edge_style,
     default_label_colour,
     default_node_edge_colours,
+    default_node_style,
     default_nominal_palette,
 )
 from ..plot.util import action_level_by_first_occurrence
@@ -126,7 +129,7 @@ class MainUI(QObject):  # Not a widget
         self.actions: list[list] = []  # type: ignore
         self.sequences: list[list[Action]] = []  # type: ignore
         self.tipping_point_by_action: alias.TippingPointByAction = {}  # type: ignore
-        self.colour_by_action_name: dict[str, Colour] = {}  # type: ignore
+        self.colour_by_action_name: dict[str, alias.Colour] = {}  # type: ignore
 
         self.ui.action_open.setIcon(QtGui.QIcon(Path.icon("folder-open-table.png")))
         self.ui.action_save.setIcon(QtGui.QIcon(Path.icon("disk.png")))
@@ -239,7 +242,9 @@ class MainUI(QObject):  # Not a widget
     def _plot_sequence_graph(self, sequence_graph: SequenceGraph) -> None:
         plot_colours = PlotColours(
             sequence_graph_node_colours(sequence_graph, self.colour_by_action_name),
+            default_node_style(),
             default_edge_colours(sequence_graph),
+            default_edge_style(),
             default_node_edge_colours(sequence_graph),
             default_label_colour(),
         )
@@ -253,7 +258,9 @@ class MainUI(QObject):  # Not a widget
     def _plot_pathway_graph(self, pathway_graph: PathwayGraph) -> None:
         plot_colours = PlotColours(
             pathway_graph_node_colours(pathway_graph, self.colour_by_action_name),
+            default_node_style(),
             default_edge_colours(pathway_graph),
+            default_edge_style(),
             default_node_edge_colours(pathway_graph),
             default_label_colour(),
         )
@@ -267,7 +274,9 @@ class MainUI(QObject):  # Not a widget
     def _plot_pathway_map(self, pathway_map: PathwayMap) -> None:
         plot_colours = PlotColours(
             pathway_map_node_colours(pathway_map, self.colour_by_action_name),
+            default_node_style(),
             pathway_map_edge_colours(pathway_map, self.colour_by_action_name),
+            default_edge_style(),
             default_node_edge_colours(pathway_map),
             default_label_colour(),
         )
@@ -281,7 +290,9 @@ class MainUI(QObject):  # Not a widget
     def _plot_pathway_classic_map(self, pathway_map: PathwayMap) -> None:
         plot_colours = PlotColours(
             pathway_map_node_colours(pathway_map, self.colour_by_action_name),
+            pathway_map_node_styles(pathway_map),
             pathway_map_edge_colours(pathway_map, self.colour_by_action_name),
+            pathway_map_edge_styles(pathway_map),
             default_node_edge_colours(pathway_map),
             default_label_colour(),
         )

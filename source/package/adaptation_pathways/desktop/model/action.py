@@ -1,16 +1,18 @@
 from PySide6 import QtCore, QtGui
 from PySide6.QtCore import Qt
 
-from ...plot.colour import Colour
+from ... import alias
 
 
 class ActionModel(QtCore.QAbstractTableModel):
 
     _actions: list[list]
     _headers: tuple[str]
-    _colour_by_action_name: dict[str, Colour]
+    _colour_by_action_name: dict[str, alias.Colour]
 
-    def __init__(self, actions: list[list], colour_by_action_name: dict[str, Colour]):
+    def __init__(
+        self, actions: list[list], colour_by_action_name: dict[str, alias.Colour]
+    ):
 
         super().__init__()
         self._actions = actions

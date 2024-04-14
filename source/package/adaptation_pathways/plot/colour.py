@@ -7,14 +7,7 @@ Default colours are all taken from the `Nord theme palettes <https://www.nordthe
 from dataclasses import dataclass
 
 from ..graph import PathwayGraph, PathwayMap, SequenceGraph
-
-
-Colour = tuple[float, float, float, float]
-"""
-A colour is represented by four floating point values [0, 1], representing RGBA values respectively
-"""
-
-Colours = list[Colour]
+from . import alias
 
 
 @dataclass
@@ -23,15 +16,19 @@ class PlotColours:
     This class aggregates colours used when plotting graphs
 
     :param node_colours: Fill colours for nodes
+    :param node_style: Fill style for nodes
     :param edge_colours: Line colours for edges
+    :param edge_style: Line style for edges
     :param node_edge_colours: Line colours for node outline
     :param label_colour: Label colour for labels
     """
 
-    node_colours: Colours | None = None
-    edge_colours: Colours | None = None
-    node_edge_colours: Colours | None = None
-    label_colour: Colour | None = None
+    node_colours: list[alias.Colour | alias.Colours] | None = None
+    node_style: alias.FillStyle | list[alias.FillStyle | alias.FillStyles] | None = None
+    edge_colours: list[alias.Colour | alias.Colours] | None = None
+    edge_style: alias.Style | list[alias.Style | alias.Styles] | None = None
+    node_edge_colours: alias.Colours | None = None
+    label_colour: alias.Colour | None = None
 
 
 nord_palette_nominal = [
@@ -79,7 +76,7 @@ Various shades of blue colours
 """
 
 
-def default_nominal_palette() -> Colours:
+def default_nominal_palette() -> alias.Colours:
     """
     Return the default palette with nominal colours
     """
@@ -88,19 +85,28 @@ def default_nominal_palette() -> Colours:
 
 def default_edge_colours(
     graph: SequenceGraph | PathwayGraph,
-) -> Colours:
+) -> list[alias.Colour | alias.Colours]:
     """
     For each edge in the graph, return a colour
     """
     colour = nord_palette_dark[3]
-    colours = [colour] * len(list(graph.graph.edges))
+    colours: list[alias.Colour | alias.Colours] = [colour] * len(
+        list(graph.graph.edges)
+    )
 
     return colours
+
+
+def default_edge_style() -> alias.Style:
+    """
+    Return the default edge style
+    """
+    return "solid"
 
 
 def default_node_edge_colours(
     graph: SequenceGraph | PathwayGraph | PathwayMap,
-) -> Colours:
+) -> alias.Colours:
     """
     For each edge in the graph, return a colour
     """
@@ -110,25 +116,32 @@ def default_node_edge_colours(
     return colours
 
 
-def default_node_colour() -> Colour:
+def default_node_colour() -> alias.Colour:
     """
     Return the default node colour
     """
     return nord_palette_dark[3]
 
 
-def default_label_colour() -> Colour:
+def default_node_style() -> alias.FillStyle:
+    """
+    Return the default node style
+    """
+    return "full"
+
+
+def default_label_colour() -> alias.Colour:
     """
     Return the default label colour
     """
     return nord_palette_dark[0]
 
 
-def default_action_colours(nr_actions: int) -> Colours:
+def default_action_colours(nr_actions: int) -> alias.Colours:
     """
     For each action, return a colour
     """
-    colours: Colours = []
+    colours: alias.Colours = []
 
     while len(colours) < nr_actions:
         # Append the whole palette as many times as needed
@@ -138,7 +151,7 @@ def default_action_colours(nr_actions: int) -> Colours:
     return colours[:nr_actions]
 
 
-def rgba_to_hex(colour: Colour) -> str:
+def rgba_to_hex(colour: alias.Colour) -> str:
     """
     Return the hex representation of the colour in RGBA representation
     """
@@ -151,7 +164,7 @@ def rgba_to_hex(colour: Colour) -> str:
     return f"#{a:02x}{r:02x}{g:02x}{b:02x}"
 
 
-def hex_to_rgba(colour: str) -> Colour:
+def hex_to_rgba(colour: str) -> alias.Colour:
     """
     Return the RGBA representation of the colour in hex representation
     """

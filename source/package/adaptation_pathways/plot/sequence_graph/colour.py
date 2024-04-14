@@ -1,21 +1,22 @@
 from ...graph import SequenceGraph
 from ...graph.node import Action as ActionNode
+from .. import alias
 from ..colour import (
-    Colour,
-    Colours,
     PlotColours,
     default_edge_colours,
+    default_edge_style,
     default_label_colour,
     default_node_edge_colours,
+    default_node_style,
     default_nominal_palette,
 )
 
 
 def colour_by_node(
-    graph: SequenceGraph, colour_by_action_name: dict[str, Colour]
-) -> Colours:
+    graph: SequenceGraph, colour_by_action_name: dict[str, alias.Colour]
+) -> list[alias.Colour | alias.Colours]:
     # pylint: disable=redefined-outer-name
-    colours = []
+    colours: list[alias.Colour | alias.Colours] = []
 
     for node in graph._graph.nodes:
         assert isinstance(node, ActionNode)
@@ -25,7 +26,9 @@ def colour_by_node(
     return colours
 
 
-def colour_by_action_name(graph: SequenceGraph, palette: Colours) -> dict[str, Colour]:
+def colour_by_action_name(
+    graph: SequenceGraph, palette: alias.Colours
+) -> dict[str, alias.Colour]:
     palette_size = len(palette)
     result = {}
 
@@ -40,7 +43,7 @@ def colour_by_action_name(graph: SequenceGraph, palette: Colours) -> dict[str, C
     return result
 
 
-def default_node_colours(graph: SequenceGraph) -> Colours:
+def default_node_colours(graph: SequenceGraph) -> list[alias.Colour | alias.Colours]:
     colour_by_action_name_ = (
         graph.graph.graph["colour_by_action_name"]
         if "colour_by_action_name" in graph.graph.graph
@@ -53,7 +56,9 @@ def default_node_colours(graph: SequenceGraph) -> Colours:
 def default_colours(sequence_graph: SequenceGraph) -> PlotColours:
     return PlotColours(
         default_node_colours(sequence_graph),
+        default_node_style(),
         default_edge_colours(sequence_graph),
+        default_edge_style(),
         default_node_edge_colours(sequence_graph),
         default_label_colour(),
     )

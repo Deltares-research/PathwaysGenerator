@@ -37,8 +37,8 @@ def read_dataset(
         else:
             message = (
                 f"Error while reading text dataset {basename_pathname}. "
-                "First tried reading a binary dataset with that name "
-                "but it does not exist."
+                "(First tried reading a binary dataset with that name "
+                "but it does not exist.)"
             )
         raise RuntimeError(message) from exception
 

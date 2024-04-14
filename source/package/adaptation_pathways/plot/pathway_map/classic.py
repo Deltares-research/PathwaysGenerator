@@ -1,4 +1,5 @@
 import math
+from collections.abc import Iterable
 
 import matplotlib as mpl
 import numpy as np
@@ -7,6 +8,7 @@ from ...action import Action
 from ...action_combination import ActionCombination
 from ...graph import PathwayMap
 from ...graph.node import ActionBegin, Node
+from .. import alias
 from ..colour import PlotColours
 from ..util import add_position
 from .colour import default_colours
@@ -18,113 +20,56 @@ def _draw_edges(
     pathway_map,
     layout,
     edge_colours,
+    edge_style: list[alias.Style | alias.Styles],
     edge_list=None,
     node_list=None,
 ) -> mpl.collections.LineCollection:
-    # The default behavior is to use LineCollection to draw edges for
-    # undirected graphs (for performance reasons) and use FancyArrowPatches
-    # for directed graphs.
-    # The `arrows` keyword can be used to override the default behavior
-    ### use_linecollection = not pathway_map.graph.is_directed()
-    ### if arrows in (True, False):
-    ###     use_linecollection = not arrows
-
-    ### # Some kwargs only apply to FancyArrowPatches. Warn users when they use
-    ### # non-default values for these kwargs when LineCollection is being used
-    ### # instead of silently ignoring the specified option
-    ### if use_linecollection and any(
-    ###     [
-    ###         arrowstyle is not None,
-    ###         arrowsize != 10,
-    ###         connectionstyle != "arc3",
-    ###         min_source_margin != 0,
-    ###         min_target_margin != 0,
-    ###     ]
-    ### ):
-    ###     import warnings
-
-    ###     msg = (
-    ###         "\n\nThe {0} keyword argument is not applicable when drawing edges\n"
-    ###         "with LineCollection.\n\n"
-    ###         "To make this warning go away, either specify `arrows=True` to\n"
-    ###         "force FancyArrowPatches or use the default value for {0}.\n"
-    ###         "Note that using FancyArrowPatches may be slow for large graphs.\n"
-    ###     )
-    ###     if arrowstyle is not None:
-    ###         msg = msg.format("arrowstyle")
-    ###     if arrowsize != 10:
-    ###         msg = msg.format("arrowsize")
-    ###     if connectionstyle != "arc3":
-    ###         msg = msg.format("connectionstyle")
-    ###     if min_source_margin != 0:
-    ###         msg = msg.format("min_source_margin")
-    ###     if min_target_margin != 0:
-    ###         msg = msg.format("min_target_margin")
-    ###     warnings.warn(msg, category=UserWarning, stacklevel=2)
-
-    ### if arrowstyle == None:
-    ###     if pathway_map.graph.is_directed():
-    ###         arrowstyle = "-|>"
-    ###     else:
-    ###         arrowstyle = "-"
-    # arrowstyle = "-|>"
 
     if edge_list is None:
         edge_list = list(pathway_map.graph.edges())
 
-    if len(edge_list) == 0:  # no edges!
+    if len(edge_list) == 0:
         return mpl.collections.LineCollection([])
 
     if node_list is None:
         node_list = list(pathway_map.graph.nodes())
 
-    # FancyArrowPatch handles color=None different from LineCollection
-    if edge_colours is None:
-        # edge_colours = "k"
-        pass
-    # edgelist_tuple = list(map(tuple, edge_list))
+    edge_pos = [(layout[e[0]], layout[e[1]]) for e in edge_list]
 
-    # set edge positions
-    edge_pos = np.asarray([(layout[e[0]], layout[e[1]]) for e in edge_list])
+    # The edge styles passed in may contain lists of styles. In that case, records for all
+    # per-edge collections must be duplicated.
+    if isinstance(edge_style, Iterable):
+        expansions = []
+        for idx, style in enumerate(edge_style):
+            if not isinstance(style, str) and isinstance(style, Iterable):
+                expansions.append((idx, len(style)))
 
-    # # Check if edge_colours is an array of floats and map to edge_cmap.
-    # # This is the only case handled differently from matplotlib
-    # if (
-    #     np.iterable(edge_colours)
-    #     and (len(edge_colours) == len(edge_pos))
-    #     and np.all([isinstance(c, Number) for c in edge_colours])
-    # ):
-    #     if edge_cmap is not None:
-    #         assert isinstance(edge_cmap, mpl.colors.Colormap)
-    #     else:
-    #         edge_cmap = plt.get_cmap()
-    #     if edge_vmin is None:
-    #         edge_vmin = min(edge_colours)
-    #     if edge_vmax is None:
-    #         edge_vmax = max(edge_colours)
-    #     color_normal = mpl.colors.Normalize(vmin=edge_vmin, vmax=edge_vmax)
-    #     edge_colours = [edge_cmap(color_normal(e)) for e in edge_colours]
+        # Duplicate by iterating from last to first expansion
+        expansions.reverse()
 
-    def _draw_networkx_edges_line_collection():
-        edge_collection = mpl.collections.LineCollection(
-            edge_pos,
-            colors=edge_colours,
-            antialiaseds=(1,),
-            # linestyle=style,
-            # alpha=alpha,
-        )
-        # edge_collection.set_cmap(edge_cmap)
-        # edge_collection.set_clim(edge_vmin, edge_vmax)
-        edge_collection.set_zorder(1)  # edges go behind nodes
-        # edge_collection.set_label(label)
-        axes.add_collection(edge_collection)
+        for idx, count in expansions:
+            edge_pos[idx : idx + 1] = count * [edge_pos[idx]]
+            if not isinstance(edge_colours[idx], tuple) and isinstance(
+                edge_colours[idx], Iterable
+            ):
+                assert len(edge_colours[idx]) == count, "Not enough colours for styles"
+                edge_colours[idx : idx + 1] = edge_colours[idx]
+            else:
+                edge_colours[idx : idx + 1] = count * [edge_colours[idx]]
+            edge_style[idx : idx + 1] = edge_style[idx]  # type: ignore[assignment]
 
-        return edge_collection
+    edge_pos = np.asarray(edge_pos)
 
-    # Draw the edges
-    edge_viz_obj = _draw_networkx_edges_line_collection()
+    edge_collection = mpl.collections.LineCollection(
+        edge_pos,
+        colors=edge_colours,
+        linestyle=edge_style,
+        antialiaseds=(1,),
+    )
+    edge_collection.set_zorder(1)  # edges go behind nodes
+    axes.add_collection(edge_collection)
 
-    return edge_viz_obj
+    return edge_collection
 
 
 def _draw_nodes(
@@ -132,26 +77,51 @@ def _draw_nodes(
     pathway_map,
     layout,
     node_colours,
+    node_style: list[alias.FillStyle | alias.FillStyles],
     node_list=None,
 ) -> mpl.collections.PathCollection:
+
     if node_list is None:
         node_list = list(pathway_map.graph)
 
-    if len(node_list) == 0:  # empty node_list, no drawing
+    if len(node_list) == 0:
         return mpl.collections.PathCollection(None)
 
-    try:
-        xy = np.asarray([layout[v] for v in node_list])
-    except KeyError as exception:
-        raise RuntimeError(f"Node {exception} has no position.") from exception
+    node_pos = np.asarray([layout[v] for v in node_list])
 
-    node_collection = axes.scatter(
-        xy[:, 0],
-        xy[:, 1],
-        c=node_colours,
-    )
+    # Unfortunately, scatter doesn't seem to support passing in marker properties that change
+    # per symbol
+    # node_collection = axes.scatter(
+    #     node_pos[:, 0],
+    #     node_pos[:, 1],
+    #     c=node_colours,
+    # )
 
-    # TODO What is this?
+    # Not sure how to build a PathCollection from individual plot commands. Do we need to?
+    node_collection = mpl.collections.PathCollection(None)
+
+    for idx, pos in enumerate(node_pos):
+        if node_style[idx] == "full":
+            axes.plot(
+                pos[0],
+                pos[1],
+                marker="o",
+                fillstyle="full",
+                color=node_colours[idx],
+                markeredgecolor="none",
+            )
+        else:
+            assert len(node_colours[idx]) == 2, "Only two colours supported ATM"
+            axes.plot(
+                pos[0],
+                pos[1],
+                marker="o",
+                fillstyle="bottom",
+                markerfacecolor=node_colours[idx][0],
+                markerfacecoloralt=node_colours[idx][1],
+                markeredgecolor="none",
+            )
+
     node_collection.set_zorder(2)
 
     return node_collection
@@ -176,7 +146,7 @@ def _update_data_limits(axes, coordinates):
     axes.update_datalim(corners)
 
 
-def _configure_axes(axes, pathway_map, layout, title, plot_colours):
+def _configure_axes(axes, pathway_map, layout, title, plot_colours) -> None:
     # pylint: disable=too-many-locals
     if len(title) > 0:
         axes.set_title(title)
@@ -188,14 +158,13 @@ def _configure_axes(axes, pathway_map, layout, title, plot_colours):
     axes.set_xlabel("time")
 
     actions = pathway_map.actions()
-
     action_names = [action.name for action in actions]
 
-    labels = []
+    y_labels = []
     y_coordinates = []
     label_colours = []
-    is_action_combination = []
-    y_coordinates_of_regular_actions = []
+    action_by_y_coordinate: dict[float, set[Action]] = {}
+    colour_by_action: dict[Action, alias.Colour] = {}
 
     # Action combinations that continue a single action end up at the same y-coordinate as
     # the action which they continue. Coordinates and labels for only these specific combinations
@@ -204,34 +173,32 @@ def _configure_axes(axes, pathway_map, layout, title, plot_colours):
         for idx, action_node in enumerate(layout):
             if action_node.action.name == action_name:
                 y_coordinate = layout[action_node][1]
-                colour = plot_colours.node_colours[idx]
-
-                labels.append(action_name)
-                y_coordinates.append(y_coordinate)
-                label_colours.append(colour)
-
-                is_action_combination.append(
-                    isinstance(action_node.action, ActionCombination)
+                action_by_y_coordinate.setdefault(y_coordinate, set()).add(
+                    action_node.action
                 )
-                if not isinstance(action_node.action, ActionCombination):
-                    y_coordinates_of_regular_actions.append(y_coordinate)
+                colour_by_action[action_node.action] = plot_colours.node_colours[idx]
 
-    # Sieve out the information for those action combinations that continue a single action
+    for y_coordinate, actions in action_by_y_coordinate.items():
+        assert len(actions) > 0
 
-    # sieve = [
-    #     is_action_combination[idx]
-    #     and y_coordinates_of_regular_actions.count([y_coordinates[idx]]) > 0
-    #     for idx in range(len(y_coordinates))
-    # ]
-    # y_coordinates = [
-    #     y_coordinates[idx] for idx in range(len(y_coordinates)) if not sieve[idx]
-    # ]
-    # labels = [labels[idx] for idx in range(len(labels)) if not sieve[idx]]
-    # label_colours = [
-    #     label_colours[idx] for idx in range(len(label_colours)) if not sieve[idx]
-    # ]
+        regular_actions = [
+            action for action in actions if not isinstance(action, ActionCombination)
+        ]
 
-    axes.set_yticks(y_coordinates, labels=labels)
+        if len(actions) > 1 and len(regular_actions) > 0:
+            # Combination of regular actions and action combinations at same y-coordinate
+            # Use regular action for label and colour
+            action = next(iter(regular_actions))
+        else:
+            # Only a single action or only multiple action combinations at same y-coordinate
+            # Use first action for label and colour
+            action = next(iter(actions))
+
+        y_coordinates.append(y_coordinate)
+        y_labels.append(action.name)
+        label_colours.append(colour_by_action[action])
+
+    axes.set_yticks(y_coordinates, labels=y_labels)
 
     for colour, tick in zip(label_colours, axes.yaxis.get_major_ticks()):
         tick.label1.set_color(colour)
@@ -260,18 +227,13 @@ def classic_pathway_map_plotter(
     title,
     plot_colours,
 ) -> tuple[mpl.collections.LineCollection, mpl.collections.PathCollection]:
-    # TODO
-    # - Get rid of the frames
-    # - Transparent background
-    # - Support dashed lines when multiple colours are passed for an edge
-    # - Understand size and scale of plot + coordinates
 
-    # Once we understand plotting with matplotlib, adjust the layout of parallel pathways. They
-    # need to be separated a bit vertically.
-    # - Use existing distribute function, center around Action's y-coordinate
-
-    edge_artist = _draw_edges(axes, pathway_map, layout, plot_colours.edge_colours)
-    node_artist = _draw_nodes(axes, pathway_map, layout, plot_colours.node_colours)
+    edge_artist = _draw_edges(
+        axes, pathway_map, layout, plot_colours.edge_colours, plot_colours.edge_style
+    )
+    node_artist = _draw_nodes(
+        axes, pathway_map, layout, plot_colours.node_colours, plot_colours.node_style
+    )
 
     _configure_axes(axes, pathway_map, layout, title, plot_colours)
 

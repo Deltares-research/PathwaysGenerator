@@ -3,20 +3,19 @@ from PySide6.QtCore import Qt
 
 from ... import alias
 from ...action import Action
-from ...plot.colour import Colour
 
 
 class SequenceModel(QtCore.QAbstractTableModel):
     _sequences: list[list[Action]]
     _tipping_point_by_action: alias.TippingPointByAction
     _horizonal_headers: tuple[str, str, str]
-    _colour_by_action_name: dict[str, Colour]
+    _colour_by_action_name: dict[str, alias.Colour]
 
     def __init__(
         self,
         sequences: list[list[Action]],
         tipping_point_by_action: alias.TippingPointByAction,
-        colour_by_action_name: dict[str, Colour],
+        colour_by_action_name: dict[str, alias.Colour],
     ):
         super().__init__()
         self._sequences = sequences

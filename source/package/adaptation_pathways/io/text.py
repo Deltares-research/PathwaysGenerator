@@ -267,7 +267,9 @@ def read_sequences(
                         f"Found tipping point {tipping_point} "
                         f"for action {sequence[1]}, which already has "
                         f"tipping point {tipping_point_by_action[sequence[1]]}. "
-                        "Actions must be associated with exactly one tipping point."
+                        "Actions must be associated with exactly one tipping point. "
+                        f"Action editions ({sequence[1]}[1], {sequence[1]}[2]) can be used for "
+                        "multiple occurrences of the same action."
                     )
 
                 tipping_point_by_action[sequence[1]] = tipping_point
