@@ -532,7 +532,7 @@ class MainUI(QObject):  # Not a widget
         colour = self._current_palette[colour_idx]
 
         action = Action(name)
-        assert not name in self.colour_by_action_name, name
+        assert name not in self.colour_by_action_name, name
         self.colour_by_action_name[action.name] = colour
         self.actions.append([action])
         self._set_data_changed(True)

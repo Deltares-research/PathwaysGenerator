@@ -14,7 +14,7 @@ from ..util import add_position
 from .colour import default_colours
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 def _draw_edges(
     axes,
     pathway_map,
@@ -72,6 +72,7 @@ def _draw_edges(
     return edge_collection
 
 
+# pylint: disable=too-many-positional-arguments
 def _draw_nodes(
     axes,
     pathway_map,

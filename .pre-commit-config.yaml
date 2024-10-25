@@ -55,4 +55,5 @@ repos:
     exclude: |
       (?x)^(
         adaptation_pathways.spec.in|
+        pyproject.toml|
       )$
