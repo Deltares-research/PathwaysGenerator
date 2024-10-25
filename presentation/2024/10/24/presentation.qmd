@@ -1,0 +1,34 @@
+---
+title: "Adaptation pathways"
+subtitle: "Current status"
+date: "20241024"
+format:
+  revealjs:
+    theme: moon
+    fontsize: 2em
+    code-line-numbers: false
+    highlight-style: nord
+    standalone: true
+    embed-resources: true
+---
+
+
+::: {.incremental}
+- All code, tests, docs are in the Git repository
+- Generated targets:
+    - Run tests
+    - Documentation
+    - Python package (Wheel package)
+    - Portable distribution of GUI (zip file)
+- Bugs, TODOs are described in GitHub issues
+:::
+
+
+---
+
+::: {.incremental}
+- Developer Manual
+- User Manual
+- GitHub issues
+- GitHub wiki (use?)
+:::
