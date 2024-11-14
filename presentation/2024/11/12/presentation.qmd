@@ -1,0 +1,186 @@
+---
+title: "Adaptation pathways"
+subtitle: "Technicalities"
+date: "20241112"
+format:
+  revealjs:
+    theme: moon
+    fontsize: 2em
+    code-line-numbers: false
+    highlight-style: nord
+    standalone: true
+    embed-resources: true
+---
+
+# Topics
+
+::: {.incremental}
+- GUI
+- Plotting
+:::
+
+
+# Assumptions
+
+::: {.incremental}
+- Pathway logic in Python package
+- More freedom WRT UI-specific code
+- UI is one of the possible interfaces
+- Generator useful in workshop setting → interactivity
+:::
+
+
+# GUI
+
+## Aspects
+
+::: {.incremental}
+- Web vs desktop
+- Installer vs URL
+- "Round trip latency"
+:::
+
+
+## Options
+
+::: {.incremental}
+- Qt
+- Flet
+- "Web"
+- Dash
+:::
+
+
+## Qt
+
+::: {.incremental}
+- Desktop application
+- Installer
+- Python bindings
+:::
+
+
+## Flet
+
+::: {.incremental}
+- Web, desktop and mobile application
+- Server process required:
+    - Yes (default)
+    - No (icw Pyodide)
+- Access to local file system → standard open/save dialogs
+- Python bindings (Flutter)
+- Pyodide
+:::
+
+
+## Web
+
+::: {.incremental}
+- Web application
+- Server process required
+    - Yes (default)
+    - No (icw Pyodide)
+- Styling using CSS (also in case of Flet and Dash)
+:::
+
+
+## Dash
+
+::: {.incremental}
+- Dashboard, but also useful for general UI dev
+- Integration with plotly
+- Web application and desktop application (Qt web widget)
+- Commercial (beware of enshittification?)
+- More popular than Flet
+:::
+
+
+# Plotting
+
+## Aspects
+
+::: {.incremental}
+- Support for visualization styles
+- Vector vs raster formats
+- Python
+- Interactivity
+- Hovering
+- Save as {pdf,png,...} from Python script
+:::
+
+
+## Options
+
+::: {.incremental}
+- matplotlib
+- plotly
+:::
+
+
+## matplotlib
+
+::: {.incremental}
+- Python
+- Vector + raster formats
+- Primitives for custom plots
+- Support for interactivity
+- We already use it
+- Installed by default
+:::
+
+
+## plotly
+
+::: {.incremental}
+- Python bindings
+- Vector + raster formats
+- Support for interactivity
+- Customization through JavaScript?
+- Commercial (enshittification?)
+:::
+
+
+# Solutions
+
+## Flet app
+
+::: {.incremental}
+- GUI: Flet
+- Plotting: matplotlib
+- Pyodide
+- ✓:
+    - No installation
+    - Works everywhere
+    - Everything in Python
+- ~:
+    - Will Flet fly?
+:::
+
+
+## Qt desktop app
+
+::: {.incremental}
+- GUI: Qt
+- Plotting: matplotlib
+- ✓:
+    - Works on all desktop platforms
+    - Everything in Python
+    - No server process
+    - Access to local file system
+- ~:
+    - Requires installation
+    - Package is platform specific
+:::
+
+
+## Dash app
+
+::: {.incremental}
+- GUI: Dash
+- Plotting: plotly
+- ✓:
+    - Everything in Python
+- ~:
+    - Server process
+    - Dependence on a single company
+:::
