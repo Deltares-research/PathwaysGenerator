@@ -23,7 +23,9 @@ class Metric:
     id: str
     name: str
     unit: MetricUnit
-    current_value: float
+    current_value: (
+        float  # js: is this needed? Metric is usually paired with MetricValue?
+    )
     estimate: MetricEstimate
 
 
