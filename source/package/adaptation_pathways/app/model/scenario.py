@@ -5,8 +5,10 @@ from metric import Metric, MetricValue
 
 @dataclasses.dataclass
 class TimeSeriesPoint:
-    time: float
-    data: MetricValue | None
+    time: (
+        float | None
+    )  # js: A scenario might be provided or not. need to think about this
+    data: MetricValue
 
 
 @dataclasses.dataclass
