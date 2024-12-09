@@ -9,4 +9,4 @@ class Pathway:
     id: str
     base_action: Action
     child_pathways: list["Pathway"]
-    metric_data: dict[Metric, MetricValue | None]
+    metric_data: dict[Metric, MetricValue]

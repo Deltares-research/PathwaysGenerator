@@ -1,8 +1,7 @@
-from _evaluate_criterion import evaluate_criterion
-from _get_metric_value_by_name import get_metric_value_by_name
-
 from ..app.model.metric import Metric, MetricValue
 from ..sequence import Sequence
+from ._evaluate_criterion import evaluate_criterion
+from ._get_metric_value_by_name import get_metric_value_by_name
 
 
 class SequenceEvaluator:
@@ -19,7 +18,9 @@ class SequenceEvaluator:
         :param tippingpoint_metric: Metric object used to determine length of sequence.
         :param planning_end: The target value for planning.
         """
-        self.sequences = [sequence for sequence in sequences if sequence.is_valid]
+        self.sequences = [
+            sequence for sequence in sequences if sequence.filters.is_valid
+        ]
         self.tippingpoint_metric = tippingpoint_metric
         self.planning_end = planning_end
 
@@ -52,7 +53,7 @@ class SequenceEvaluator:
         :param sequence: The Sequence object to evaluate.
         :return: Number of actions needed to meet the planning_end.
         """
-        cumulative_value = 0
+        cumulative_value = 0.0
         for idx, action in enumerate(sequence.actions):
             metric_value = action.metric_data[self.tippingpoint_metric]
             if not metric_value:
@@ -76,12 +77,11 @@ class SequenceEvaluator:
         num_needed = self.determine_number_needed_actions(sequence)
         for key in sequence.actions[0].metric_data.keys():
             metrics = [
-                action.metric_data.get(key)
+                action.metric_data[key]
                 for action in sequence.actions
-                if action.metric_data.get(key)
+                if key in action.metric_data and action.metric_data[key] is not None
             ]
-
-            evaluation_results[key] = self.evaluate_criterion(metrics, num_needed)
+            evaluation_results[key] = evaluate_criterion(metrics, num_needed)
 
         sequence.performance = evaluation_results
         sequence.actions = sequence.actions[:num_needed]
@@ -96,13 +96,13 @@ class SequenceEvaluator:
         for sequence in self.sequences:
             self.evaluate_sequence(sequence)
             if sequence in unique_sequences:
-                sequence.is_valid = False
-                sequence.exclusion_reason = (
+                sequence.filters.is_valid = False
+                sequence.filters.reasoning = (
                     "Part of Sequence used. Identical to other Sequence."
                 )
             else:
                 unique_sequences.append(sequence)
 
         print(
-            f"Step 2: The performance of each sequence ({len(unique_sequences)}) was calculated."
+            f"Step 2: The performance of each valid sequence ({len(unique_sequences)}) was calculated."
         )

@@ -1,13 +1,13 @@
 from typing import Optional
 
 import numpy as np
-from _evaluate_criterion import evaluate_criterion
 
 from ..action_instance import ActionInstance
 from ..app.model.action import Action
 from ..app.model.metric import Metric
 from ..app.model.scenario import Scenario
 from ..sequence import Sequence
+from ._evaluate_criterion import evaluate_criterion
 
 
 class PathwaysInputGenerator:
@@ -26,8 +26,9 @@ class PathwaysInputGenerator:
         :param tippingpoint_metric: Metric used to determine timing/position of actions in pathways
         """
         self.filtered_sequences = [
-            sequence for sequence in sequences if not sequence.filtered_out
+            sequence for sequence in sequences if not sequence.filters.filtered_out
         ]
+
         self.scenario = scenario
         self.action_instances = (
             action_instances if action_instances is not None else []
@@ -47,9 +48,9 @@ class PathwaysInputGenerator:
         evaluation_results = {}
         for key in sequence.actions[0].metric_data.keys():
             metrics = [
-                action.metric_data.get(key)
+                action.metric_data[key]
                 for action in sequence.actions
-                if action.metric_data.get(key)
+                if key in action.metric_data and action.metric_data[key] is not None
             ]
             evaluation_results[key] = evaluate_criterion(metrics, up_to_index)
         return evaluation_results
@@ -69,7 +70,7 @@ class PathwaysInputGenerator:
 
         # Retrieve the time-series data for the specified metric
         time_series = self.scenario.metric_data_over_time.get(metric, [])
-        if not time_series:
+        if time_series == []:
             raise ValueError(f"No time-series data found for metric: {metric.name}")
 
         # Extract times and data values
@@ -80,7 +81,7 @@ class PathwaysInputGenerator:
 
         if tipping_point_value in data_values:
             idx = np.where(data_values == tipping_point_value)[0][0]
-            return float(times[idx])
+            return float(int(times[idx]))
         idx = np.searchsorted(data_values, tipping_point_value)
         if idx == 0 or idx == len(data_values):
             raise ValueError(
@@ -98,16 +99,21 @@ class PathwaysInputGenerator:
         interpolated_time = lower_time + (upper_time - lower_time) * (
             (tipping_point_value - lower_value) / (upper_value - lower_value)
         )
-        return float(interpolated_time)
+        return float(int(interpolated_time))
 
-    def generate_action_instances(self):
+    def generate_action_instances(
+        self,
+        end_current_system: float,
+    ):
         """
         Creates ActionInstance objects for each action in the sequences.
+
+        :param end_current_system: Tipping point of the current system.
         """
 
         for sequence in self.filtered_sequences:
             for idx, action in enumerate(sequence.actions):
-                precondition = sequence[
+                precondition = sequence.actions[
                     :idx
                 ]  # All elements up to (excluding) the current element
                 if action not in self.instance_count:
@@ -127,11 +133,12 @@ class PathwaysInputGenerator:
                 time_series = self.scenario.metric_data_over_time.get(
                     self.tippingpoint_metric, []
                 )
-                if not time_series:
-                    tipping_point_xposition = tipping_point_value
+                if time_series == []:
+                    tipping_point_xposition = tipping_point_value + end_current_system
                 else:
                     tipping_point_xposition = self.interpolate_time(
-                        tipping_point_value, self.tippingpoint_metric
+                        tipping_point_value + end_current_system,
+                        self.tippingpoint_metric,
                     )
 
                 # Create ActionInstance
@@ -141,16 +148,25 @@ class PathwaysInputGenerator:
                     tipping_point=tipping_point_xposition,
                     metric_data=instance_performance,
                 )
+                print(
+                    action.name,
+                    unique_instance,
+                    tipping_point_value,
+                    tipping_point_xposition,
+                )
                 self.action_instances.append(action_instance)
 
-    def create_xpositions_file(self, end_current_system: float, output_file: str):
+    def create_xpositions_file(self, output_file: str, end_current_system: float):
         """
         Creates the xpositions.txt file from the ActionInstance objects.
 
         :param end_current_system: Tipping point of the current system.
         :param output_file: The name of the output file.
         """
-        if self.scenario is not None:
+        time_series = self.scenario.metric_data_over_time.get(
+            self.tippingpoint_metric, False
+        )
+        if time_series != []:
             xpositions_list = [
                 (
                     "current",
@@ -161,10 +177,10 @@ class PathwaysInputGenerator:
             xpositions_list = [("current", end_current_system)]
 
         for instance in self.action_instances:
-            xposition_value = instance.tipping_point + end_current_system
+            xposition_value = instance.tipping_point
             action_key = f"{instance.action.name.replace(' ', '')}[{instance.instance}]"
             xpositions_list.append((action_key, xposition_value))
-
+        xpositions_list = list(set(xpositions_list))
         # Write the file
         with open(output_file, "w", encoding="utf-8") as file:
             for key, value in xpositions_list:
@@ -261,6 +277,6 @@ class PathwaysInputGenerator:
         :param xposition_file: File to store xpositions.
         :param end_current_system: Tipping point of the current system.
         """
-        self.generate_action_instances()
-        self.create_xpositions_file(end_current_system, xposition_file)
+        self.generate_action_instances(end_current_system)
+        self.create_xpositions_file(xposition_file, end_current_system)
         self.create_sequences_file(sequence_file)

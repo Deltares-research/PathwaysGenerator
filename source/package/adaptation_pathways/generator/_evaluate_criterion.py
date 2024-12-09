@@ -9,7 +9,7 @@ def evaluate_criterion(metrics: list[MetricValue], num_needed: int):
     :param num_needed: integer to specify number of actions in Sequence considered for evaluation
     :return: A MetricValue object representing the combined evaluation.
     """
-    relevant_metrics = metrics[:num_needed]
+    relevant_metrics = metrics[: num_needed + 1]
     if all(isinstance(metric.value, (int, float)) for metric in relevant_metrics):
         # Combine numeric values by summing them
         value = sum(metric.value for metric in relevant_metrics)
