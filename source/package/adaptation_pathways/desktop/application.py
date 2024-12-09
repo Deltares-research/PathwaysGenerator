@@ -23,9 +23,7 @@ from ..io import binary, read_dataset
 from ..plot import (
     pathway_graph_node_colours,
     pathway_map_edge_colours,
-    pathway_map_edge_styles,
     pathway_map_node_colours,
-    pathway_map_node_styles,
     plot_classic_pathway_map,
     plot_default_pathway_graph,
     plot_default_pathway_map,
@@ -288,15 +286,6 @@ class MainUI(QObject):  # Not a widget
         self.pathway_map_widget.draw()
 
     def _plot_pathway_classic_map(self, pathway_map: PathwayMap) -> None:
-        plot_colours = PlotColours(
-            pathway_map_node_colours(pathway_map, self.colour_by_action_name),
-            pathway_map_node_styles(pathway_map),
-            pathway_map_edge_colours(pathway_map, self.colour_by_action_name),
-            pathway_map_edge_styles(pathway_map),
-            default_node_edge_colours(pathway_map),
-            default_label_colour(),
-        )
-
         if pathway_map.nr_nodes() > 0:
             pathway_map.assign_tipping_points(self.tipping_point_by_action, verify=True)
 
@@ -306,9 +295,11 @@ class MainUI(QObject):  # Not a widget
         pathway_map.set_attribute("level_by_action", level_by_action)
         pathway_map.set_attribute("colour_by_action_name", self.colour_by_action_name)
 
+        arguments = {"colour_by_action_name": self.colour_by_action_name}
+
         self.pathway_map_classic_widget.axes.clear()
         plot_classic_pathway_map(
-            self.pathway_map_classic_widget.axes, pathway_map, plot_colours=plot_colours
+            self.pathway_map_classic_widget.axes, pathway_map, arguments=arguments
         )
         self.pathway_map_classic_widget.draw()
 

@@ -32,6 +32,8 @@ def plot_pathway_map(
         :func:`classic.plot <adaptation_pathways.plot.pathway_map.classic.plot>`
     """
     if layout == PathwayMapLayout.CLASSIC:
-        plot_classic(axes, pathway_map, title, plot_colours)
+        # TODO This won't work as colours aren't passed in. Fix when actually needed. Skipping for now as we
+        #      have other priorities.
+        plot_classic(axes, pathway_map)
     else:
         plot_default(axes, pathway_map, title, plot_colours)

@@ -66,7 +66,11 @@ pathway_map.assign_tipping_points(tipping_point_by_action)
 pathway_map.set_attribute("level_by_action", level_by_action)
 pathway_map.set_attribute("colour_by_action_name", colour_by_action_name)
 
+arguments = {
+    "colour_by_action_name": colour_by_action_name,
+}
+
 _, axes = plt.subplots(layout="constrained")
 init_axes(axes)
-plot_classic_pathway_map(axes, pathway_map)
+plot_classic_pathway_map(axes, pathway_map, arguments=arguments)
 plt.show()
