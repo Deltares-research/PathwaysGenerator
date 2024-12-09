@@ -8,6 +8,11 @@ class SequenceComparison(Enum):
     DOESNT_CONTAIN = 4
     ENDS_WITH = 5
     DOESNT_END_WITH = 6
+    BLOCKS = 7
+    AFTER = 8
+    DIRECTLY_AFTER = 9
+    BEFORE = 10
+    DIRECTLY_BEFORE = 11
 
 
 class NumberComparison(Enum):

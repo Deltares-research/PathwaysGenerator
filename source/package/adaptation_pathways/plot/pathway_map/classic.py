@@ -1,214 +1,224 @@
 import math
-from collections.abc import Iterable
+import typing
 
 import matplotlib as mpl
+import matplotlib.lines as mlines
+import matplotlib.markers as mmarkers
 import numpy as np
 
 from ...action import Action
 from ...action_combination import ActionCombination
 from ...graph import PathwayMap
-from ...graph.node import ActionBegin, Node
+from ...graph.node import ActionBegin, ActionEnd
 from .. import alias
-from ..colour import PlotColours
-from ..util import add_position
-from .colour import default_colours
+from ..util import add_position, distribute
 
 
-# pylint: disable=too-many-arguments, too-many-positional-arguments
-def _draw_edges(
+def _plot_action_lines(
     axes,
     pathway_map,
-    layout,
-    edge_colours,
-    edge_style: list[alias.Style | alias.Styles],
-    edge_list=None,
-    node_list=None,
+    layout: dict[ActionBegin | ActionEnd, np.ndarray],
+    *,
+    arguments: dict[str, typing.Any],
 ) -> mpl.collections.LineCollection:
 
-    if edge_list is None:
-        edge_list = list(pathway_map.graph.edges())
+    tipping_point_overshoot: float = arguments.get("tipping_point_overshoot", 0)
+    colour_by_action_name: dict[Action, alias.Colour] = arguments[
+        "colour_by_action_name"
+    ]
 
-    if len(edge_list) == 0:
-        return mpl.collections.LineCollection([])
+    edge_nodes = list(pathway_map.graph.edges())
+    edge_collection = mpl.collections.LineCollection([])
 
-    if node_list is None:
-        node_list = list(pathway_map.graph.nodes())
+    if len(edge_nodes) > 0:
+        edges = np.asarray([(layout[edge[0]], layout[edge[1]]) for edge in edge_nodes])
 
-    edge_pos = [(layout[e[0]], layout[e[1]]) for e in edge_list]
+        # Each edge consists of a start and end point. In case the y-coordinate of both points is the same,
+        # then the end point corresponds with a tipping point. The x-coordinate of this point must be tweaked,
+        # given the tipping_point_overshoot passed in.
 
-    # The edge styles passed in may contain lists of styles. In that case, records for all
-    # per-edge collections must be duplicated.
-    if isinstance(edge_style, Iterable):
-        expansions = []
-        for idx, style in enumerate(edge_style):
-            if not isinstance(style, str) and isinstance(style, Iterable):
-                expansions.append((idx, len(style)))
+        for edge in edges:
+            if edge[0][1] == edge[1][1]:
+                edge[1][0] += tipping_point_overshoot
 
-        # Duplicate by iterating from last to first expansion
-        expansions.reverse()
+        colours = [colour_by_action_name[edge[0].action.name] for edge in edge_nodes]
 
-        for idx, count in expansions:
-            edge_pos[idx : idx + 1] = count * [edge_pos[idx]]
-            if not isinstance(edge_colours[idx], tuple) and isinstance(
-                edge_colours[idx], Iterable
-            ):
-                assert len(edge_colours[idx]) == count, "Not enough colours for styles"
-                edge_colours[idx : idx + 1] = edge_colours[idx]
-            else:
-                edge_colours[idx : idx + 1] = count * [edge_colours[idx]]
-            edge_style[idx : idx + 1] = edge_style[idx]  # type: ignore[assignment]
-
-    edge_pos = np.asarray(edge_pos)
-
-    edge_collection = mpl.collections.LineCollection(
-        edge_pos,
-        colors=edge_colours,
-        linestyle=edge_style,
-        antialiaseds=(1,),
-    )
-    edge_collection.set_zorder(1)  # edges go behind nodes
-    axes.add_collection(edge_collection)
+        edge_collection = mpl.collections.LineCollection(
+            edges,
+            colors=colours,
+        )
+        axes.add_collection(edge_collection)
 
     return edge_collection
 
 
-# pylint: disable=too-many-positional-arguments
-def _draw_nodes(
+def _plot_action_starts(
     axes,
     pathway_map,
-    layout,
-    node_colours,
-    node_style: list[alias.FillStyle | alias.FillStyles],
-    node_list=None,
+    layout: dict[ActionBegin | ActionEnd, np.ndarray],
+    *,
+    arguments: dict[str, typing.Any],
 ) -> mpl.collections.PathCollection:
 
-    if node_list is None:
-        node_list = list(pathway_map.graph)
-
-    if len(node_list) == 0:
-        return mpl.collections.PathCollection(None)
-
-    node_pos = np.asarray([layout[v] for v in node_list])
-
-    # Unfortunately, scatter doesn't seem to support passing in marker properties that change
-    # per symbol
-    # node_collection = axes.scatter(
-    #     node_pos[:, 0],
-    #     node_pos[:, 1],
-    #     c=node_colours,
-    # )
-
-    # Not sure how to build a PathCollection from individual plot commands. Do we need to?
-    node_collection = mpl.collections.PathCollection(None)
-
-    for idx, pos in enumerate(node_pos):
-        if node_style[idx] == "full":
-            axes.plot(
-                pos[0],
-                pos[1],
-                marker="o",
-                fillstyle="full",
-                color=node_colours[idx],
-                markeredgecolor="none",
-            )
-        else:
-            assert len(node_colours[idx]) == 2, "Only two colours supported ATM"
-            axes.plot(
-                pos[0],
-                pos[1],
-                marker="o",
-                fillstyle="bottom",
-                markerfacecolor=node_colours[idx][0],
-                markerfacecoloralt=node_colours[idx][1],
-                markeredgecolor="none",
-            )
-
-    node_collection.set_zorder(2)
-
-    return node_collection
-
-
-def _hide_spines(axes):
-    axes.spines.top.set_visible(False)
-    axes.spines.right.set_visible(False)
-    axes.spines.bottom.set_visible(False)
-    axes.spines.left.set_visible(False)
-
-
-def _update_data_limits(axes, coordinates):
-    min_x, min_y = np.min(coordinates, 0)
-    max_x, max_y = np.max(coordinates, 0)
-    width = max_x - min_x
-    height = max_y - min_y
-    pad_x = 0.05 * width
-    pad_y = 0.05 * height
-    corners = (min_x - pad_x, min_y - pad_y), (max_x + pad_x, max_y + pad_y)
-
-    axes.update_datalim(corners)
-
-
-def _configure_axes(axes, pathway_map, layout, title, plot_colours) -> None:
-    # pylint: disable=too-many-locals
-    if len(title) > 0:
-        axes.set_title(title)
-
-    axes.tick_params(
-        left=False,
-        bottom=False,
+    start_action_marker: mmarkers.MarkerStyle = arguments.get(
+        "start_action_marker", "o"
     )
-    axes.set_xlabel("time")
+    colour_by_action_name: dict[Action, alias.Colour] = arguments[
+        "colour_by_action_name"
+    ]
 
-    actions = pathway_map.actions()
-    action_names = [action.name for action in actions]
+    nodes = pathway_map.all_action_begins()
+    path_collection = mpl.collections.PathCollection(None)
 
-    y_labels = []
+    if len(nodes) > 0:
+        node_pos = np.asarray([layout[node] for node in nodes])
+        x, y = zip(*node_pos)
+        colours = [colour_by_action_name[node.action.name] for node in nodes]
+        path_collection = axes.scatter(
+            x, y, marker=start_action_marker, c=colours
+        )  # , c = node_colours) , s=100)
+
+    return path_collection
+
+
+def _plot_action_tipping_points(
+    axes,
+    pathway_map,
+    layout: dict[ActionBegin | ActionEnd, np.ndarray],
+    *,
+    arguments: dict[str, typing.Any],
+) -> mpl.collections.PathCollection:
+
+    tipping_point_overshoot: float = arguments.get("tipping_point_overshoot", 0)
+    tipping_point_marker: mmarkers.MarkerStyle = arguments.get(
+        "tipping_point_marker", "|" if tipping_point_overshoot > 0 else "o"
+    )
+    if isinstance(tipping_point_marker, str):
+        tipping_point_marker = mmarkers.MarkerStyle(tipping_point_marker)
+    tipping_point_face_colour = arguments.get("tipping_point_face_colour", "white")
+    colour_by_action_name: dict[Action, alias.Colour] = arguments[
+        "colour_by_action_name"
+    ]
+
+    nodes = pathway_map.all_action_ends()
+    path_collection = mpl.collections.PathCollection(None)
+
+    if len(nodes) > 0:
+        # TODO Skip the tipping point at the end of each individual path way
+        node_pos = np.asarray([layout[v] for v in nodes])
+        x, y = zip(*node_pos)
+        x = np.array(x) + tipping_point_overshoot
+        colours = [colour_by_action_name[node.action.name] for node in nodes]
+
+        if tipping_point_marker.is_filled():
+            scatter_arguments = {
+                "edgecolor": colours,
+                "facecolor": tipping_point_face_colour,
+            }
+        else:
+            scatter_arguments = {
+                "facecolor": colours,
+            }
+
+        path_collection = axes.scatter(
+            x, y, marker=tipping_point_marker, **scatter_arguments
+        )
+
+    return path_collection
+
+
+def _actions_and_y_coordinates(
+    layout: dict[ActionBegin | ActionEnd, np.ndarray], action_names: list[str]
+):
+    """
+    Return collections of actions and their corresponding y-coordinates
+    """
+    actions = []
     y_coordinates = []
-    label_colours = []
     action_by_y_coordinate: dict[float, set[Action]] = {}
-    colour_by_action: dict[Action, alias.Colour] = {}
 
     # Action combinations that continue a single action end up at the same y-coordinate as
     # the action which they continue. Coordinates and labels for only these specific combinations
     # must be sieved out of the collections.
     for action_name in action_names:
-        for idx, action_node in enumerate(layout):
+        for _, action_node in enumerate(layout):
             if action_node.action.name == action_name:
                 y_coordinate = layout[action_node][1]
                 action_by_y_coordinate.setdefault(y_coordinate, set()).add(
                     action_node.action
                 )
-                colour_by_action[action_node.action] = plot_colours.node_colours[idx]
 
-    for y_coordinate, actions in action_by_y_coordinate.items():
-        assert len(actions) > 0
+    for y_coordinate, actions_ in action_by_y_coordinate.items():
+        assert len(actions_) > 0
 
         regular_actions = [
-            action for action in actions if not isinstance(action, ActionCombination)
+            action for action in actions_ if not isinstance(action, ActionCombination)
         ]
 
-        if len(actions) > 1 and len(regular_actions) > 0:
+        if len(actions_) > 1 and len(regular_actions) > 0:
             # Combination of regular actions and action combinations at same y-coordinate
             # Use regular action for label and colour
             action = next(iter(regular_actions))
         else:
             # Only a single action or only multiple action combinations at same y-coordinate
             # Use first action for label and colour
-            action = next(iter(actions))
+            action = next(iter(actions_))
 
         y_coordinates.append(y_coordinate)
-        y_labels.append(action.name)
-        label_colours.append(colour_by_action[action])
+        actions.append(action)
+
+    assert len(actions) == len(y_coordinates)
+    return actions, y_coordinates
+
+
+# pylint: disable-next=too-many-locals
+def _plot_annotations(
+    axes,
+    pathway_map,
+    layout: dict[ActionBegin | ActionEnd, np.ndarray],
+    *,
+    arguments: dict[str, typing.Any],
+    legend_arguments: dict[str, typing.Any],
+) -> None:
+
+    # Title
+    title: str = arguments.get("title", "")
+    if len(title) > 0:
+        axes.set_title(title)
+
+    # Left y-axis
+    axes.spines.left.set_visible(False)
+    axes.tick_params(left=False)
+
+    actions = pathway_map.actions()
+    action_names: list[str] = [action.name for action in actions]
+    actions, y_coordinates = _actions_and_y_coordinates(layout, action_names)
+    y_labels = [action.name for action in actions]
+    colour_by_action_name: dict[Action, alias.Colour] = arguments[
+        "colour_by_action_name"
+    ]
+    label_colours = [colour_by_action_name[label] for label in y_labels]
 
     axes.set_yticks(y_coordinates, labels=y_labels)
 
     for colour, tick in zip(label_colours, axes.yaxis.get_major_ticks()):
         tick.label1.set_color(colour)
 
-    _hide_spines(axes)
+    # Right y-axis
+    axes.spines.right.set_visible(False)
+
+    # Top x-axis
+    axes.spines.top.set_visible(False)
+
+    # Bottom x-axis
+    axes.spines.bottom.set_visible(True)
+    axes.tick_params(bottom=True)
+    axes.set_xlabel(arguments.get("x_label", ""))
 
     if len(layout) > 0:
-        coordinates = np.concatenate(list(layout.values())).reshape(len(layout), 2)
-        _update_data_limits(axes, coordinates)
+        # TODO Still needed?
+        # coordinates = np.concatenate(list(layout.values())).reshape(len(layout), 2)
+        # _update_data_limits(axes, coordinates)
 
         x_ticks = axes.get_xticks()
 
@@ -218,34 +228,72 @@ def _configure_axes(axes, pathway_map, layout, title, plot_colours) -> None:
         x_labels = [f"{int(tick)}" for tick in x_ticks]
         axes.set_xticks(x_ticks, labels=x_labels)
 
-    axes.autoscale_view()
+    show_legend: bool = arguments.get("show_legend", False)
+
+    # Legend
+    if show_legend:
+
+        # TODO Document this:
+        # - Use rcParams["legend.*"] to tweak the default appearance of the legend
+        # - Use kwargs to override the default appearance of the legend
+        # See also:
+        # - https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html#matplotlib.axes.Axes.legend
+
+        # Iterate over all actions that are shown on the y-axis. For each of these create a proxy artist. Then
+        # create the legend, passing in the proxy artists.
+
+        handles = []
+
+        # TODO Maybe we need to do something about the ordering(?)
+        for label, colour in zip(y_labels, label_colours):
+            handles.append(mlines.Line2D([], [], color=colour, label=label))
+
+        axes.legend(handles=handles, **legend_arguments)
 
 
 def classic_pathway_map_plotter(
     axes,
     pathway_map,
-    layout,
-    title,
-    plot_colours,
-) -> tuple[mpl.collections.LineCollection, mpl.collections.PathCollection]:
+    layout: dict[ActionBegin | ActionEnd, np.ndarray],
+    *,
+    arguments: dict[str, typing.Any],
+    legend_arguments: dict[str, typing.Any],
+) -> None:
 
-    edge_artist = _draw_edges(
-        axes, pathway_map, layout, plot_colours.edge_colours, plot_colours.edge_style
+    # Components of a metro map, drawn in increasing z-order:
+    # - Action lines
+    # - Action start points
+    # - Action tipping points
+    # - Title, axes and legend
+
+    edge_collection = _plot_action_lines(axes, pathway_map, layout, arguments=arguments)
+    edge_collection.set_zorder(0)
+
+    node_collection = _plot_action_starts(
+        axes, pathway_map, layout, arguments=arguments
     )
-    node_artist = _draw_nodes(
-        axes, pathway_map, layout, plot_colours.node_colours, plot_colours.node_style
+    node_collection.set_zorder(1)
+
+    node_collection = _plot_action_tipping_points(
+        axes, pathway_map, layout, arguments=arguments
+    )
+    node_collection.set_zorder(1)
+
+    _plot_annotations(
+        axes,
+        pathway_map,
+        layout,
+        arguments=arguments,
+        legend_arguments=legend_arguments,
     )
 
-    _configure_axes(axes, pathway_map, layout, title, plot_colours)
-
-    # Return the result(s) of a plot function(s) (artists?)
-    return edge_artist, node_artist
+    axes.autoscale_view()
 
 
 def _distribute_horizontally(
     pathway_map: PathwayMap,
     action_begin: ActionBegin,
-    position_by_node: dict[Node, np.ndarray],
+    position_by_node: dict[ActionBegin | ActionEnd, np.ndarray],
 ) -> None:
     assert isinstance(action_begin, ActionBegin)
 
@@ -263,11 +311,57 @@ def _distribute_horizontally(
         _distribute_horizontally(pathway_map, action_begin_new, position_by_node)
 
 
+def _spread_vertically(
+    pathway_map: PathwayMap,
+    position_by_node: dict[ActionBegin | ActionEnd, np.ndarray],
+    overlapping_lines_spread: float,
+) -> None:
+
+    # - If vertical spreading is enabled
+    # - Assign all action_end / action_begin combinations to bins
+    # - For those bins that contain more than one elements, tweak the x-coordinates
+    # - Make the magnitude of the tweak configurable (dependent on line width?)
+
+    nodes_by_x: dict[float, list[tuple[ActionEnd, ActionBegin]]] = {}
+
+    for action_end in pathway_map.all_action_ends():
+        action_begins = pathway_map.action_begins(action_end)
+        x = position_by_node[action_end][0]
+
+        if x not in nodes_by_x:
+            nodes_by_x[x] = []
+
+        for action_begin in action_begins:
+            assert position_by_node[action_begin][0] == x
+            nodes_by_x[x].append((action_end, action_begin))
+
+    min_x = min(nodes_by_x.keys())
+    max_x = max(nodes_by_x.keys())
+    range_x = max_x - min_x
+
+    # Root action end. This x coordinate needs no tweaking.
+    del nodes_by_x[min_x]
+
+    for x, nodes in nodes_by_x.items():
+        nr_nodes = len(nodes)
+
+        if nr_nodes > 1:
+            x_coordinates = distribute(
+                nr_nodes * [x], overlapping_lines_spread * range_x
+            )
+
+            for idx in range(nr_nodes):
+                action_end, action_begin = nodes[idx]
+                position_by_node[action_end][0] = x_coordinates[idx]
+                position_by_node[action_begin][0] = x_coordinates[idx]
+
+
 # pylint: disable-next=too-many-locals, too-many-branches
 def _distribute_vertically(
     pathway_map: PathwayMap,
     root_action_begin: ActionBegin,
-    position_by_node: dict[Node, np.ndarray],
+    position_by_node: dict[ActionBegin | ActionEnd, np.ndarray],
+    overlapping_lines_spread: float,
 ) -> None:
 
     action_end = pathway_map.action_end(root_action_begin)
@@ -390,10 +484,15 @@ def _distribute_vertically(
         assert np.isnan(position_by_node[action_end][1])
         position_by_node[action_end][1] = y_coordinate
 
+    if overlapping_lines_spread > 0:
+        _spread_vertically(pathway_map, position_by_node, overlapping_lines_spread)
+
 
 def _layout(
     pathway_map: PathwayMap,
-) -> dict[Node, np.ndarray]:
+    *,
+    overlapping_lines_spread: float,
+) -> dict[ActionBegin | ActionEnd, np.ndarray]:
     """
     Layout that replicates the pathway map layout of the original (pre-2024) pathway generator
 
@@ -412,10 +511,10 @@ def _layout(
 
     The graph in the pathway map passed in must contain an attribute called "level_by_action",
     with a numeric value per action, which corresponds with the position in the above mentioned
-    stack.  Low numbers correspond with a high position in the stack (large y-coordinate). Such
+    stack. Low numbers correspond with a high position in the stack (large y-coordinate). Such
     actions will be positioned at the top of the pathway map.
     """
-    position_by_node: dict[Node, np.ndarray] = {}
+    position_by_node: dict[ActionBegin | ActionEnd, np.ndarray] = {}
 
     if pathway_map.nr_edges() > 0:
         root_action_begin = pathway_map.root_node
@@ -430,7 +529,9 @@ def _layout(
         add_position(position_by_node, root_action_begin, (x_coordinate, 0))
 
         _distribute_horizontally(pathway_map, root_action_begin, position_by_node)
-        _distribute_vertically(pathway_map, root_action_begin, position_by_node)
+        _distribute_vertically(
+            pathway_map, root_action_begin, position_by_node, overlapping_lines_spread
+        )
 
     return position_by_node
 
@@ -438,12 +539,23 @@ def _layout(
 def plot(
     axes: mpl.axes.Axes,
     pathway_map: PathwayMap,
-    title: str = "",
-    plot_colours: PlotColours | None = None,
+    *,
+    arguments: dict[str, typing.Any] | None = None,
+    legend_arguments: dict[str, typing.Any] | None = None,
 ) -> None:
-    if plot_colours is None:
-        plot_colours = default_colours(pathway_map)
+
+    if arguments is None:
+        arguments = {}
+
+    if legend_arguments is None:
+        legend_arguments = {}
+
+    overlapping_lines_spread: float = arguments.get("overlapping_lines_spread", 0)
 
     classic_pathway_map_plotter(
-        axes, pathway_map, _layout(pathway_map), title, plot_colours
+        axes,
+        pathway_map,
+        _layout(pathway_map, overlapping_lines_spread=overlapping_lines_spread),
+        arguments=arguments,
+        legend_arguments=legend_arguments,
     )
