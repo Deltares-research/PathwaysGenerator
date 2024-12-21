@@ -10,5 +10,5 @@ from .plot.alias import *  # pylint: disable=wildcard-import, unused-wildcard-im
 Actions = list[Action | ActionCombination]
 Sequence = tuple[Action, Action]
 Sequences = list[Sequence]
-TippingPoint = int
+TippingPoint = float
 TippingPointByAction = dict[Action, TippingPoint]

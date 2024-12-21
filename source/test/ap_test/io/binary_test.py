@@ -76,7 +76,7 @@ class SQLiteTest(unittest.TestCase):
         self, database_path: str, actions: alias.Actions, sequences: alias.Sequences
     ):
 
-        tipping_point_by_action = {}
+        tipping_point_by_action: dict[Action, float] = {}
 
         if len(sequences) > 0:
             # Add tipping point for the root action, which is not part of the sequences collection

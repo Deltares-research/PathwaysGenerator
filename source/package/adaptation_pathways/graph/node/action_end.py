@@ -4,7 +4,7 @@ from ...action import Action
 from .node import Node
 
 
-TippingPoint: TypeAlias = int
+TippingPoint: TypeAlias = float
 
 
 class ActionEnd(Node):

@@ -1,6 +1,6 @@
 from ..action import Action
 from ..action_combination import ActionCombination
-from .node import ActionBegin, ActionEnd
+from .node import ActionBegin, ActionEnd, TippingPoint
 from .rooted_graph import RootedGraph
 
 
@@ -108,7 +108,7 @@ class PathwayMap(RootedGraph):
         return result
 
     def assign_tipping_points(
-        self, tipping_points: dict[Action, int], verify: bool = False
+        self, tipping_points: dict[Action, TippingPoint], verify: bool = False
     ) -> None:
         """
         Assign / update tipping points to ActionEnd nodes associated with the actions passed in
@@ -123,19 +123,19 @@ class PathwayMap(RootedGraph):
         if verify:
             verify_tipping_points(self)
 
-    def tipping_points(self) -> list[int]:
+    def tipping_points(self) -> list[TippingPoint]:
         """
         Return all unique tipping points, in increasing order
         """
-        result: list[int] = []
+        result: list[TippingPoint] = []
 
         for action_end in self.all_action_ends():
             result.append(action_end.tipping_point)
 
         return list(dict.fromkeys(result))
 
-    def tipping_point_range(self) -> tuple[int, int]:
-        result = (0, 0)
+    def tipping_point_range(self) -> tuple[TippingPoint, TippingPoint]:
+        result: tuple[TippingPoint, TippingPoint] = (0, 0)
 
         if self.nr_nodes() > 0:
             min_tipping_point = self.action_end(self.root_node).tipping_point
