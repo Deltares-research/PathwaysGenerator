@@ -2,7 +2,7 @@ import flet as ft
 import theme
 from controls.editable_cell import EditableCell
 
-from adaptation_pathways.app.model.metric import Metric, MetricValue
+from adaptation_pathways.app.model.metric import Metric, MetricValue, MetricValueState
 
 
 class FloatInputFilter(ft.InputFilter):
@@ -16,16 +16,10 @@ class MetricValueCell(EditableCell):
     def __init__(self, metric: Metric, value: MetricValue, on_finished_editing=None):
         self.metric = metric
         self.value = value
+        self.finished_editing_callback = on_finished_editing
 
         self.display_content = ft.Text("")
         self.update_display()
-
-        def on_edited(_):
-            self.value.value = float(self.input_content.value)
-            self.value.is_estimate = False
-            self.set_calculated(False)
-            if on_finished_editing is not None:
-                on_finished_editing(self)
 
         self.input_content = ft.TextField(
             dense=True,
@@ -51,8 +45,24 @@ class MetricValueCell(EditableCell):
             self.display_content,
             self.input_content,
             is_calculated=value.is_estimate,
-            on_finished_editing=on_edited,
+            can_reset=value.state == MetricValueState.OVERRIDE,
+            on_finished_editing=self.on_edited,
+            alignment=ft.alignment.center_right,
         )
+
+    def on_edited(self):
+        new_value = float(self.input_content.value)
+        print(new_value)
+        if new_value != self.value.value and self.value.is_estimate:
+            self.value.state = MetricValueState.OVERRIDE
+        self.value.value = new_value
+
+        if self.finished_editing_callback is not None:
+            self.finished_editing_callback(self)
+
+    def on_reset_to_calculated(self):
+        self.value.state = MetricValueState.ESTIMATE
+        self.on_edited()
 
     def update_display(self):
         self.display_content.value = self.metric.unit.format(self.value.value)

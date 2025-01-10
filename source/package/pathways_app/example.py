@@ -11,21 +11,18 @@ metric_sea_level_rise = Metric(
     "sea-level-rise",
     name="Sea Level Rise",
     unit_or_default="cm",
-    current_value=10,
 )
 
 metric_cost = Metric(
     "cost",
     name="Cost",
     unit_or_default="€",
-    current_value=0,
 )
 
 metric_habitat_health = Metric(
     "habitat",
     name="Habitat Health",
     unit_or_default="Impact",
-    current_value=0,
 )
 
 action_root = Action(

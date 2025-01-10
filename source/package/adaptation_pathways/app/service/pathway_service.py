@@ -29,21 +29,3 @@ class PathwayService:
         # Generate all pathways that don't violate the provided constraints
         # Estimate a value for each metric based on its Metric.estimate method
         return []
-
-    @staticmethod
-    def estimate_metric(
-        pathway: Pathway,
-        metric: Metric,
-        all_actions: list[Action],
-        all_pathways: list[Pathway],
-    ) -> float:
-        # For manual estimate, just use the existing data (if there is any)
-        if metric.estimate is MetricEstimate.MANUAL:
-            current_data = pathway.metric_data.get(metric)
-            if current_data is None or current_data.is_estimate:
-                return 0
-
-            return current_data.value
-
-        # Do the proper estimate respecting the Metric.estimate method
-        return 0

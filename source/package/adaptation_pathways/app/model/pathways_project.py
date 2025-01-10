@@ -7,7 +7,7 @@ from typing import Callable, Iterable
 from adaptation_pathways.app.model.sorting import SortingInfo, SortTarget
 
 from .action import Action
-from .metric import Metric, MetricEffect, MetricOperation, MetricValue
+from .metric import Metric, MetricEffect, MetricOperation, MetricValue, MetricValueState
 from .pathway import Pathway
 from .scenario import Scenario
 
@@ -274,6 +274,8 @@ class PathwaysProject:
             self.action_sorting.sort_by_id()
 
     def get_pathway(self, pathway_id: str) -> Pathway | None:
+        if pathway_id is None:
+            return None
         return self.pathways_by_id.get(pathway_id, None)
 
     def create_pathway(
@@ -300,30 +302,36 @@ class PathwaysProject:
         self, pathway: Pathway, metric: Metric, updated_pathway_ids: set[str]
     ):
         pathway_action = self.get_action(pathway.action_id)
-        current_value = pathway.metric_data.get(metric.id, MetricValue(0, True))
-        pathway.metric_data[metric.id] = current_value
-
-        if current_value is not None and not current_value.is_estimate:
-            updated_pathway_ids.add(pathway.id)
-            return
-
-        if pathway.parent_id is None:
-            pathway.metric_data[metric.id] = MetricValue(metric.current_value)
-            updated_pathway_ids.add(pathway.id)
-            return
-
         parent = self.get_pathway(pathway.parent_id)
-        if parent is None:
-            pathway.metric_data[metric.id] = MetricValue(metric.current_value)
+        current_value = pathway.metric_data.get(metric.id, None)
+
+        # Initialize the value if there was none
+        if current_value is None:
+            current_value = MetricValue(
+                0,
+                (
+                    MetricValueState.ESTIMATE
+                    if parent is not None
+                    else MetricValueState.BASE
+                ),
+            )
+            pathway.metric_data[metric.id] = current_value
+
+        # If we have a non-estimate value, we don't need to update anything
+        if current_value.state != MetricValueState.ESTIMATE:
             updated_pathway_ids.add(pathway.id)
             return
-
-        parent_value = parent.metric_data[metric.id]
 
         if parent.id not in updated_pathway_ids and parent_value.is_estimate:
             self._update_pathway_value(parent, metric, updated_pathway_ids)
 
-        current_value.value = pathway_action.apply_effect(metric.id, parent_value.value)
+        base_value = 0
+        if parent is not None:
+            parent_value = parent.metric_data.get(metric.id, None)
+            if parent_value is not None:
+                base_value = parent_value.value
+
+        current_value.value = pathway_action.apply_effect(metric.id, base_value)
         updated_pathway_ids.add(pathway.id)
 
     def delete_pathway(self, pathway_id: str) -> Pathway | None:

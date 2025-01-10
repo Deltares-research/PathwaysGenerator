@@ -13,7 +13,8 @@ class DefaultThemeColors:
     primary_darker = "#160E59"
     secondary_light = "#91E0EC"
     secondary_medium = "#48BDCF"
-    calculated_bg = "#10000000"
+    calculated_bg = "#208888AA"
+    calculated_icon = "#8888AA"
 
 
 colors = DefaultThemeColors()
@@ -72,6 +73,7 @@ class DefaultThemeVariables:
     panel_spacing = 6
     panel_padding = 10
     table_cell_padding = ft.padding.symmetric(4, 8)
+    calculated_icon_size = 16
 
 
 variables = DefaultThemeVariables()

@@ -12,26 +12,58 @@ class EditableCell(TableCell, ABC):
         self,
         display_control: ft.Control,
         edit_control: ft.Control,
-        is_calculated=False,
         is_editing=False,
+        is_calculated=False,
+        can_reset=False,
+        alignment: ft.Alignment | None = ft.alignment.center_left,
+        padding: int | ft.Padding | None = theme.variables.table_cell_padding,
         on_finished_editing: Callable[["EditableCell"], None] | None = None,
     ):
         self.display_content = display_control
         self.input_content = edit_control
-        self.is_calculated = is_calculated
+        self.calculated_icon = ft.Container(
+            ft.Icon(
+                ft.icons.CALCULATE,
+                size=theme.variables.calculated_icon_size,
+                color=theme.colors.calculated_icon,
+            ),
+            expand=True,
+            alignment=ft.alignment.top_left,
+        )
+        self.reset_button = ft.Container(
+            ft.Icon(
+                ft.icons.CALCULATE,
+                size=theme.variables.calculated_icon_size,
+                color=theme.colors.calculated_icon,
+            ),
+            on_click=self.on_reset_to_calculated,
+        )
+
         self.is_editing = is_editing
+        self.is_calculated = is_calculated
+        self.can_reset = can_reset
         self.on_finished_editing = on_finished_editing
 
-        self.display_content.visible = not self.is_editing
-        self.input_content.visible = self.is_editing
+        self.update_visibility()
 
         self.cell_content = ft.Container(
             expand=True,
-            content=ft.Stack([self.display_content, self.input_content]),
+            content=ft.Stack(
+                [
+                    self.display_content,
+                    ft.Row(
+                        [self.reset_button, self.input_content],
+                        expand=True,
+                    ),
+                    self.calculated_icon,
+                ],
+                expand=True,
+                alignment=alignment,
+            ),
+            padding=padding,
+            bgcolor=theme.colors.calculated_bg if self.is_calculated else None,
             on_click=self.toggle_editing,
         )
-
-        self.update_bg()
 
         super().__init__(control=self.cell_content)
 
@@ -43,10 +75,7 @@ class EditableCell(TableCell, ABC):
         else:
             self.update_display()
 
-        self.display_content.visible = not self.is_editing
-        self.input_content.visible = self.is_editing
-
-        self.update_bg()
+        self.update_visibility()
         self.control.update()
 
         if self.is_editing:
@@ -55,17 +84,14 @@ class EditableCell(TableCell, ABC):
             if self.on_finished_editing is not None:
                 self.on_finished_editing(self)
 
-    def update_bg(self):
-        self.cell_content.bgcolor = (
-            theme.colors.calculated_bg
-            if self.is_calculated and not self.is_editing
-            else None
-        )
+    def update_visibility(self):
+        self.display_content.visible = not self.is_editing
+        self.input_content.visible = self.is_editing
+        self.calculated_icon.visible = self.is_calculated and not self.is_editing
+        self.reset_button.visible = self.can_reset and self.is_editing
 
-    def set_calculated(self, is_calculated):
-        self.is_calculated = is_calculated
-        self.update_bg()
-        self.control.update()
+    def on_reset_to_calculated(self):
+        pass
 
     @abstractmethod
     def update_display(self):

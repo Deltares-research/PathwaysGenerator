@@ -9,4 +9,4 @@ class ScenarioService:
         metric: Metric, time: float, scenario: Scenario
     ) -> float:
         # Replace with a linear interpolation/extrapolation using the nearest points
-        return metric.current_value
+        return 0

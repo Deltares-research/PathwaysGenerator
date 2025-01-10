@@ -34,6 +34,7 @@ class SortableHeader(ft.Container):
         expand: bool | int | None = True,
         col: int | None = None,
         bgcolor: str | None = None,
+        width: int | None = None,
         height: int | None = None,
     ):
         self.sort_key = sort_key
@@ -54,6 +55,7 @@ class SortableHeader(ft.Container):
             ),
             padding=theme.variables.table_cell_padding,
             bgcolor=bgcolor,
+            width=width,
             height=height,
         )
 

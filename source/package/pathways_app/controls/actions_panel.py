@@ -115,9 +115,7 @@ class ActionsPanel(ft.Column):
 
     def update_table(self):
         columns = [
-            TableColumn(
-                label="Icon",
-            ),
+            TableColumn(label="Icon", width=45, expand=False),
             TableColumn(
                 label="Name",
             ),

@@ -49,7 +49,7 @@ class ScenariosPanel(ft.Column):
                         TableCell(ft.Text(year)),
                         *(
                             TableCell(
-                                ft.Text(data or "None"), is_calculated=data is None
+                                ft.Text(data or "None")
                             )
                             for data in [
                                 current_scenario.get_data(year, metric)

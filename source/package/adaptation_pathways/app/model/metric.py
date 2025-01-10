@@ -39,7 +39,6 @@ class MetricUnit:
 class Metric:
     id: str
     name: str
-    current_value: float
     unit_or_default: MetricUnit | str
 
     @property
@@ -57,10 +56,20 @@ class Metric:
         return self.id.__hash__()
 
 
+class MetricValueState(Enum):
+    BASE = 0
+    ESTIMATE = (1,)
+    OVERRIDE = 2
+
+
 @dataclasses.dataclass
 class MetricValue:
     value: float
-    is_estimate: bool = False
+    state: MetricValueState = MetricValueState.BASE
+
+    @property
+    def is_estimate(self):
+        return self.state == MetricValueState.ESTIMATE
 
 
 class MetricOperation(Enum):

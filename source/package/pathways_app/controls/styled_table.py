@@ -13,7 +13,8 @@ class TableColumn:
         key: str | None = None,
         on_sort: Callable[[None], None] | None = None,
         expand: bool | int | None = True,
-        alignment: ft.Alignment | None = None,
+        width: int | None = None,
+        alignment: ft.Alignment | None = ft.alignment.center_left,
     ):
 
         self.label = label
@@ -21,12 +22,17 @@ class TableColumn:
         self.expand = expand
         self.key = label if key is None else key
         self.alignment = alignment
+        self.width = width
 
 
 class TableCell:
-    def __init__(self, control: ft.Control, is_calculated=False):
+    def __init__(
+        self,
+        control: ft.Control,
+        sort_value: int | float | None = None,
+    ):
         self.control = control
-        self.is_calculated = is_calculated
+        self.sort_value = sort_value
 
 
 class StyledTable(ft.Container):
@@ -117,7 +123,6 @@ class StyledTable(ft.Container):
             self.on_sort(column_index)
 
     def on_row_selected(self, index: int):
-        print(index)
         if index in self.selected_row_indices:
             self.selected_row_indices.remove(index)
         else:
@@ -164,6 +169,7 @@ class StyledTable(ft.Container):
                         ),
                         expand=column.expand,
                         bgcolor=theme.colors.primary_lightest,
+                        width=column.width,
                         height=self.row_height,
                     )
                 )
@@ -219,18 +225,9 @@ class StyledTable(ft.Container):
     def _create_row(self, index: int, cell: TableCell) -> ft.Container:
         column = self.column_data[index]
         return ft.Container(
-            content=ft.Column(
-                [
-                    ft.Container(cell.control, expand=True, padding=10),
-                ],
-                expand=True,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                # alignment=ft.MainAxisAlignment.END,
-                # theme.variables.table_cell_padding,
-                # alignment=self.column_data[index],
-            ),
-            bgcolor=(theme.colors.calculated_bg if cell.is_calculated else None),
+            content=cell.control,
             expand=column.expand,
             height=self.row_height,
-            # padding=theme.variables.table_cell_padding,
+            width=column.width,
+            padding=None,
         )

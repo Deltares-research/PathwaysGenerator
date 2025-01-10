@@ -24,7 +24,6 @@ def main(page: ft.Page):
 
     # bitdojo_window could make a custom title bar
     # page.window.frameless = True
-
     page.window.width = 1200
     page.window.height = 800
     page.window.resizable = True
