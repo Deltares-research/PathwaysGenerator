@@ -8,8 +8,9 @@ from adaptation_pathways.app.model.sorting import SortingInfo, SortTarget
 
 class SortMode(Enum):
     NONE = 0
-    ASCENDING = 1
-    DESCENDING = 2
+    UNSORTED = 1
+    ASCENDING = 2
+    DESCENDING = 3
 
     def get_icon(self):
         match self:
@@ -17,8 +18,10 @@ class SortMode(Enum):
                 return ft.icons.KEYBOARD_ARROW_UP
             case SortMode.DESCENDING:
                 return ft.icons.KEYBOARD_ARROW_DOWN
-            case _:
+            case SortMode.UNSORTED:
                 return ft.icons.UNFOLD_MORE
+            case _:
+                return None
 
 
 class SortableHeader(ft.Container):
@@ -28,6 +31,10 @@ class SortableHeader(ft.Container):
         name: str,
         sort_mode: SortMode = SortMode.NONE,
         on_sort=None,
+        expand: bool | int | None = True,
+        col: int | None = None,
+        bgcolor: str | None = None,
+        height: int | None = None,
     ):
         self.sort_key = sort_key
         self.name = name
@@ -36,20 +43,31 @@ class SortableHeader(ft.Container):
         self.update_icon()
 
         super().__init__(
-            expand=True,
+            expand=expand,
+            col=col,
             content=ft.Row(
-                expand=True, controls=[ft.Text(name, expand=True), self.icon]
+                expand=True,
+                controls=[
+                    ft.Text(name, expand=True, style=theme.text.table_header),
+                    self.icon,
+                ],
             ),
+            padding=theme.variables.table_cell_padding,
+            bgcolor=bgcolor,
+            height=height,
         )
 
         def on_click(_):
+            if self.sort_mode == SortMode.NONE:
+                pass
+
             new_sort_mode = (
                 SortMode.ASCENDING
-                if self.sort_mode == SortMode.NONE
+                if self.sort_mode == SortMode.UNSORTED
                 else (
                     SortMode.DESCENDING
                     if self.sort_mode == SortMode.ASCENDING
-                    else SortMode.NONE
+                    else SortMode.UNSORTED
                 )
             )
             self.set_sort_mode(new_sort_mode)
@@ -74,6 +92,7 @@ class SortableHeader(ft.Container):
         self.icon.name = self.sort_mode.get_icon()
         self.icon.color = (
             theme.colors.primary_lighter
-            if self.sort_mode is SortMode.NONE
+            if self.sort_mode is SortMode.UNSORTED
             else theme.colors.primary_dark
         )
+        self.icon.visible = self.sort_mode != SortMode.NONE

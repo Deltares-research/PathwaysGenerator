@@ -13,7 +13,7 @@ class DefaultThemeColors:
     primary_darker = "#160E59"
     secondary_light = "#91E0EC"
     secondary_medium = "#48BDCF"
-    calculated_bg = "#E5E5E5"
+    calculated_bg = "#10000000"
 
 
 colors = DefaultThemeColors()

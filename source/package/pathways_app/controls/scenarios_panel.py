@@ -1,7 +1,7 @@
 import flet as ft
 from controls.styled_button import StyledButton
 from controls.styled_dropdown import StyledDropdown
-from controls.styled_table import StyledTable
+from controls.styled_table import StyledTable, TableCell, TableColumn
 
 from adaptation_pathways.app.model.pathways_project import PathwaysProject
 
@@ -38,27 +38,25 @@ class ScenariosPanel(ft.Column):
             ),
             StyledTable(
                 columns=[
-                    ft.DataColumn(label=ft.Text("Year")),
+                    TableColumn(label="Year"),
                     *(
-                        ft.DataColumn(label=ft.Text(metric.name))
+                        TableColumn(label=metric.name)
                         for metric in self.project.sorted_conditions
                     ),
                 ],
                 rows=[
-                    ft.DataRow(
-                        [
-                            ft.DataCell(ft.Text(year)),
-                            *(
-                                ft.DataCell(
-                                    ft.Text(
-                                        current_scenario.get_data(year, metric)
-                                        or "None"
-                                    )
-                                )
+                    [
+                        TableCell(ft.Text(year)),
+                        *(
+                            TableCell(
+                                ft.Text(data or "None"), is_calculated=data is None
+                            )
+                            for data in [
+                                current_scenario.get_data(year, metric)
                                 for metric in self.project.sorted_conditions
-                            ),
-                        ]
-                    )
+                            ]
+                        ),
+                    ]
                     for year in year_range
                 ],
             ),

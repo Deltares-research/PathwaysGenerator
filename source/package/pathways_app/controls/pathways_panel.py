@@ -5,14 +5,14 @@ from controls.header import SectionHeader
 from controls.metric_value import MetricValueCell
 from controls.sortable_header import SortableHeader, SortMode
 from controls.styled_button import StyledButton
-from controls.styled_table import StyledTable
+from controls.styled_table import StyledTable, TableCell, TableColumn
 
 from adaptation_pathways.app.model.pathway import Pathway
 from adaptation_pathways.app.model.pathways_project import PathwaysProject
 from adaptation_pathways.app.model.sorting import SortTarget
 
 
-class PathwaysPanel(ft.Column):
+class PathwaysPanel(ft.Container):
     def __init__(self, project: PathwaysProject):
         self.project = project
 
@@ -26,26 +26,22 @@ class PathwaysPanel(ft.Column):
 
         super().__init__(
             expand=True,
-            scroll=ft.ScrollMode.AUTO,
-            controls=[
-                ft.Column(
-                    expand=False,
-                    horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                    controls=[
-                        ft.Row(
-                            [
-                                SectionHeader(
-                                    ft.icons.ACCOUNT_TREE_OUTLINED, "Pathways"
-                                ),
-                                ft.Container(expand=True),
-                                self.delete_pathways_button,
-                            ],
-                            spacing=15,
-                        ),
-                        self.pathway_table,
-                    ],
-                )
-            ],
+            content=ft.Column(
+                expand=True,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+                controls=[
+                    ft.Row(
+                        [
+                            SectionHeader(ft.icons.ACCOUNT_TREE_OUTLINED, "Pathways"),
+                            ft.Container(expand=True),
+                            self.delete_pathways_button,
+                        ],
+                        spacing=15,
+                        expand=False,
+                    ),
+                    self.pathway_table,
+                ],
+            ),
         )
 
     def redraw(self):
@@ -72,8 +68,8 @@ class PathwaysPanel(ft.Column):
         self.project.notify_pathways_changed()
 
     def update_table(self):
-        sorting = self.project.pathway_sorting
-        sort_mode = SortableHeader.get_sort_mode(sorting)
+        # sorting = self.project.pathway_sorting
+        # sort_mode = SortableHeader.get_sort_mode(sorting)
 
         self.delete_pathways_button.visible = (
             len(self.project.selected_pathway_ids) > 0
@@ -82,20 +78,13 @@ class PathwaysPanel(ft.Column):
 
         self.pathway_table.set_columns(
             [
-                ft.DataColumn(ft.Text("Pathway")),
+                TableColumn(label="Pathway", expand=2),
                 *(
-                    ft.DataColumn(
-                        SortableHeader(
-                            metric.id,
-                            metric.name,
-                            sort_mode=(
-                                SortMode.NONE
-                                if sorting.sort_key is not metric.id
-                                else sort_mode
-                            ),
-                            on_sort=self.on_sort_table,
-                        ),
-                        numeric=True,
+                    TableColumn(
+                        label=metric.name,
+                        key=metric.id,
+                        on_sort=self.on_sort_table,
+                        alignment=ft.alignment.center_right,
                     )
                     for metric in self.project.all_metrics()
                 ),
@@ -111,8 +100,8 @@ class PathwaysPanel(ft.Column):
             # if len(path) > 1:
             #     path = path[1:]
             row = self.get_pathway_row(pathway, path)
-            if pathway.id == self.project.root_pathway_id:
-                row.on_select_changed = None
+            # if pathway.id == self.project.root_pathway_id:
+            #     row.on_select_changed = None
             self.rows_by_pathway[pathway] = row
             rows.append(row)
 
@@ -181,41 +170,38 @@ class PathwaysPanel(ft.Column):
                 ),
             )
 
-        row = ft.DataRow(
-            [
-                ft.DataCell(
-                    ft.Container(
-                        expand=True,
-                        content=ft.Row(
-                            spacing=0,
-                            controls=row_controls,
-                        ),
+        row = [
+            TableCell(
+                ft.Container(
+                    expand=True,
+                    content=ft.Row(
+                        spacing=0,
+                        controls=row_controls,
                     ),
                 ),
-                *(
-                    MetricValueCell(
-                        metric,
-                        pathway.metric_data[metric.id],
-                        on_finished_editing=self.on_metric_value_edited,
-                    )
-                    for metric in self.project.all_metrics()
-                ),
-            ],
-            selected=pathway.id in self.project.selected_pathway_ids,
-        )
+            ),
+            *(
+                MetricValueCell(
+                    metric,
+                    pathway.metric_data[metric.id],
+                    on_finished_editing=self.on_metric_value_edited,
+                )
+                for metric in self.project.all_metrics()
+            ),
+        ]
 
-        if pathway.parent_id is None:
-            row.color = "#EEEEEE"
+        # if pathway.parent_id is None:
+        #     row.color = "#EEEEEE"
 
-        def on_select_changed(_):
-            if pathway.id in self.project.selected_pathway_ids:
-                self.project.selected_pathway_ids.remove(pathway.id)
-            else:
-                self.project.selected_pathway_ids.add(pathway.id)
+        # def on_select_changed(_):
+        #     if pathway.id in self.project.selected_pathway_ids:
+        #         self.project.selected_pathway_ids.remove(pathway.id)
+        #     else:
+        #         self.project.selected_pathway_ids.add(pathway.id)
 
-            self.project.notify_pathways_changed()
+        #     self.project.notify_pathways_changed()
 
-        row.on_select_changed = on_select_changed
+        # row.on_select_changed = on_select_changed
         return row
 
     def extend_pathway(self, pathway: Pathway, action_id: str):

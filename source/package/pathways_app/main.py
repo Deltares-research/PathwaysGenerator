@@ -117,9 +117,8 @@ def main(page: ft.Page):
                             Panel(graph_panel),
                             Panel(
                                 content=ft.Column(
-                                    expand=False,
+                                    expand=True,
                                     alignment=ft.MainAxisAlignment.START,
-                                    spacing=15,
                                     controls=[
                                         pathways_panel,
                                     ],

@@ -2,11 +2,12 @@ from typing import Callable
 
 import flet as ft
 import theme
+from pathways_app.controls.styled_table import TableCell
 
 from adaptation_pathways.app.model.metric import Metric, MetricUnit, default_units
 
 
-class MetricUnitCell(ft.DataCell):
+class MetricUnitCell(TableCell):
     def __init__(
         self,
         metric: Metric,
