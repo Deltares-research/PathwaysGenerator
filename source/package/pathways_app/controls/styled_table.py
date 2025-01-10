@@ -3,7 +3,7 @@ from typing import Callable
 
 import flet as ft
 import theme
-from pathways_app.controls.sortable_header import SortableHeader, SortMode
+from .sortable_header import SortableHeader, SortMode
 
 
 class TableColumn:

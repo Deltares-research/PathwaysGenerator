@@ -3,7 +3,7 @@ from typing import Callable
 
 import flet as ft
 import theme
-from pathways_app.controls.styled_table import TableCell
+from .styled_table import TableCell
 from pyparsing import abstractmethod
 
 
