@@ -62,14 +62,20 @@ class EditableCell(TableCell, ABC):
             ),
             padding=padding,
             bgcolor=theme.colors.calculated_bg if self.is_calculated else None,
-            on_click=self.toggle_editing,
+            on_click=self.set_editing,
         )
 
         super().__init__(control=self.cell_content)
 
-    def toggle_editing(self, _):
-        self.is_editing = not self.is_editing
+    def set_editing(self, _):
+        self.is_editing = True
+        self.update_controls()
 
+    def set_not_editing(self, _):
+        self.is_editing = False
+        self.update_controls()
+
+    def update_controls(self):
         if self.is_editing:
             self.update_input()
         else:
@@ -122,7 +128,7 @@ class EditableTextCell(EditableCell):
             suffix_style=theme.text.textfield_symbol,
             expand=True,
             content_padding=ft.padding.symmetric(4, 6),
-            on_blur=self.toggle_editing,
+            on_blur=self.set_not_editing,
         )
 
         def on_finished_editing_internal(_):

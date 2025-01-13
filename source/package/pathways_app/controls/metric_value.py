@@ -37,7 +37,7 @@ class MetricValueCell(EditableCell):
             text_align=ft.TextAlign.RIGHT,
             expand=True,
             content_padding=ft.padding.symmetric(4, 6),
-            on_blur=self.toggle_editing,
+            on_blur=self.set_not_editing,
         )
         self.update_input()
 
@@ -50,9 +50,9 @@ class MetricValueCell(EditableCell):
             alignment=ft.alignment.center_right,
         )
 
-    def on_edited(self):
+    def on_edited(self, _):
         new_value = float(self.input_content.value)
-        print(new_value)
+
         if new_value != self.value.value and self.value.is_estimate:
             self.value.state = MetricValueState.OVERRIDE
         self.value.value = new_value
@@ -62,7 +62,8 @@ class MetricValueCell(EditableCell):
 
     def on_reset_to_calculated(self):
         self.value.state = MetricValueState.ESTIMATE
-        self.on_edited()
+        self.set_not_editing()
+        print(self.value)
 
     def update_display(self):
         self.display_content.value = self.metric.unit.format(self.value.value)
