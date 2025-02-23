@@ -2,7 +2,9 @@ build
 cairosvg
 cmake
 furo
+jupyter-book
 linkchecker
+# myst-sphinx-gallery
 ninja
 pre-commit
 pyinstaller
@@ -13,5 +15,6 @@ pyinstaller
 pylint
 
 sphinx
+sphinx-autodoc2
 sphinxcontrib-mermaid
-sphinx-gallery
+# sphinx-gallery

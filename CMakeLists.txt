@@ -4,15 +4,17 @@ project(AdaptationPathways
     LANGUAGES NONE
     VERSION 0.0.10
     DESCRIPTION "Adaptation Pathways TODO"
-    HOMEPAGE_URL "https://publicwiki.deltares.nl/display/AP/Adaptation+Pathways"
+    HOMEPAGE_URL "https://github.com/Deltares-research/PathwaysGenerator"
 )
 
 set(AP_COPYRIGHT "2025 by TODO")
 string(JOIN ", " AP_AUTHORS
     # TODO Add everybody, in some order (alphabet?)
-    "Kor de Jong (Geoneric, NL)"
-    "Marjolijn Haasnoot (Deltares, NL)"
-    "Willem van Deursen (Carthago Consultancy, NL)"
+    "TODO1"
+    "TODO2"
+    # "Kor de Jong (Geoneric, NL)"
+    # "Marjolijn Haasnoot (Deltares, NL)"
+    # "Willem van Deursen (Carthago Consultancy, NL)"
 )
 
 enable_testing()
@@ -24,6 +26,7 @@ set(AP_BASE_URL "" CACHE STRING
 )
 
 find_package(Flet REQUIRED)
+find_package(JupyterBook REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(Quarto)
 find_package(Sphinx REQUIRED)

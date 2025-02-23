@@ -1,0 +1,88 @@
+# Book settings
+# Learn more at https://jupyterbook.org/customize/config.html
+
+title: @AP_TITLE@
+copyright: @AP_COPYRIGHT@
+author: @AP_AUTHORS@
+# TODO logo: logo.png
+
+# Force re-execution of notebooks on each build.
+# See https://jupyterbook.org/content/execute.html
+execute:
+  execute_notebooks: force
+
+# Define the name of the latex output file for PDF builds
+latex:
+  latex_documents:
+    targetname: @AP_BOOK_BASENAME@.tex
+
+# Information about where the book exists on the web
+repository:
+  url: @CMAKE_PROJECT_HOMEPAGE_URL@
+  # path_to_book: doc  # Optional path to your book, relative to the repository root
+  branch: master  # Which branch of the repository should be used when creating links (optional)
+
+# Add GitHub buttons to your book
+# See https://jupyterbook.org/customize/config.html#add-a-link-to-your-repository
+html:
+  use_issues_button: true
+  use_repository_button: true
+sphinx:
+  config:
+    # html_theme_options:
+    #   logo:
+    #     image_light: YOUR_LIGHT_LOGO.png
+    #     image_dark: YOUR_DARK_LOGO.png
+    html_context:
+      default_mode: light
+
+    # https://sphinx-autodoc2.readthedocs.io/en/latest/config.html#config-package
+    autodoc2_packages:
+      - "package/adaptation_pathways"
+
+    autodoc2_hidden_objects:
+      - "inherited"
+      - "private"
+
+    intersphinx_mapping: {
+        "python": ["https://docs.python.org/3", null],
+        "networkx": ["https://networkx.org/documentation/stable", null],
+        "numpy": ["https://numpy.org/doc/stable", null]
+    }
+
+    intersphinx_disabled_reftypes: ["*"]
+
+    # # https://sphinx-gallery.github.io/stable/configuration.html#configuration
+    # sphinx_gallery_conf: {
+    #   "download_all_examples": false,
+    #   "examples_dirs": [
+    #       "@CMAKE_CURRENT_SOURCE_DIR@/develop/example",
+    #       "@CMAKE_CURRENT_SOURCE_DIR@/use/example"
+    #   ],
+    #   "filename_pattern": "/.*_plot_",
+    #   "gallery_dirs": [
+    #       "develop/example",
+    #       "use/example"
+    #   ]
+    # }
+
+  extra_extensions:
+    - "autodoc2"
+    # - "myst_sphinx_gallery"
+    # - "sphinx_gallery.gen_gallery"
+    - "sphinx.ext.todo"
+    # - "sphinx.ext.autosummary"
+    - "sphinx.ext.graphviz"
+    - "sphinx.ext.intersphinx"
+    - "sphinxcontrib.mermaid"
+
+parse:
+  # https://jupyterbook.org/en/stable/content/content-blocks.html#myst-syntax-extensions
+  # https://myst-parser.readthedocs.io/en/latest/syntax/optional.html
+  myst_enable_extensions:
+    - "attrs_inline"
+    - "dollarmath"
+    - "linkify"
+    # - aside
+    # - deflist
+    # - colon_fence  # Don't use this. Syntax is already confusing enough.
