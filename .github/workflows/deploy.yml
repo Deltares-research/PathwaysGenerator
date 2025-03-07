@@ -59,7 +59,7 @@ jobs:
       - name: Generate documentation
         run: |
           cmake --build build --target documentation
-          mv build/documentation/html build/source/package/pathways_app/build/web/doc
+          mv build/documentation/_build/html build/source/package/pathways_app/build/web/doc
       - name: Setup pages
         if: github.repository == 'Deltares-research/PathwaysGenerator' && github.ref == 'refs/heads/main'
         id: pages

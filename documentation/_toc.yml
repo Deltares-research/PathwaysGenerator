@@ -1,0 +1,21 @@
+# https://jupyterbook.org/en/stable/structure/toc.html
+
+format: jb-book
+root: index
+parts:
+- caption: User manual
+  chapters:
+  - file: use/get_started.md
+  - file: use/import_export.md
+  - file: use/plot.md
+- caption: Developer manual
+  chapters:
+  - file: develop/environment.md
+  - file: develop/release.md
+  - file: develop/git.md
+- caption: About
+  chapters:
+  - file: apidocs/index.rst
+  - file: genindex.md
+  - file: glossary.md
+  - file: changelog.md
