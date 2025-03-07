@@ -3,91 +3,19 @@
 format: jb-book
 root: index
 parts:
-- caption: User
+- caption: User manual
   chapters:
-  - file: use/index.md
-    sections:
-    - file: use/get_started.md
-    - file: use/import_export.md
-    - file: use/plot.md
-    - file: apidocs/index.rst
-- caption: Developer
+  - file: use/get_started.md
+  - file: use/import_export.md
+  - file: use/plot.md
+- caption: Developer manual
   chapters:
-  - file: develop/index.md
-    # sections:
-    #  - file: develop/environment.md
-    #  - file: develop/release.md
-    #  - file: develop/git.md
-
-
-
-#       # - file: quick_start/index.md
-#       #   sections:
-#       #   - file: quick_start/python.md
-#       #   - file: quick_start/cpp.md
-
-#       # - file: manual/index.md
-#       #   sections:
-#       #   - file: manual/install/index.md
-#       #     sections:
-#       #     - file: manual/install/conda.md
-#       #     - file: manual/install/source.md
-#       #   - file: manual/data_model/index.md
-#       #     sections:
-#       #     - file: manual/data_model/concept.md
-#       #     - file: manual/data_model/format.md
-#       #   - file: manual/framework/index.md
-#       #     sections:
-#       #     - file: manual/framework/python/index.md
-#       #     - file: manual/framework/cpp/index.md
-#       #     - file: manual/framework/execute.md
-#       #   - file: manual/view/index.md
-#       #   - file: manual/quality_assurance/index.md
-#       #     sections:
-#       #     - file: manual/quality_assurance/scalability/index.md
-#       #     - file: manual/quality_assurance/scalability/quick_start.md
-#       #     - file: manual/quality_assurance/scalability/experiment.md
-#       #   - file: manual/glossary.md
-#
-#       # - file: reference/index.md
-#       #   sections:
-#       #   - file: reference/operation/index.md
-#       #     sections:
-#       #     - file: reference/operation/uniform.md
-#       #   - file: source/framework/api/doc/index.md
-#       #     sections:
-#       #     - file: reference/c/index.md
-#       #     - file: reference/cpp/index.md
-#       #       sections:
-#       #       - file: source/framework/api/cxx/doc/index.md
-#       #     # - file: reference/fortran/index.md
-#       #     # - file: reference/java/index.md
-#       #     # - file: reference/julia/index.md
-#       #     - file: reference/python/index.md
-#       #     # - file: reference/r/index.md
-#       #     # - file: reference/rust/index.md
-#       #   - file: reference/utility/index.md
-#       #     sections:
-#       #     - file: reference/utility/lue_calculate.md
-#       #     - file: reference/utility/lue_scalability.md
-#       #     - file: reference/utility/lue_translate.md
-#       #     - file: reference/utility/lue_validate.md
-#       #     - file: reference/utility/lue_view.md
-#       #   - file: reference/algorithm/index.md
-#       #     sections:
-#       #     - file: reference/algorithm/clump.md
-#       #   - file: source/quality_assurance/doc/index.md
-#       #     sections:
-#       #     - file: source/quality_assurance/cxx/doc/index.md
-#       #     - file: source/quality_assurance/python/doc/index.md
-#
-#       # - file: pcraster/index.md
-#       #   sections:
-#       #   - file: pcraster/port.md
-#       #   - file: pcraster/status.md
-#
-#       # - file: faq.md
-#
-#   - caption: Developer
-#
-#   - caption: About
+  - file: develop/environment.md
+  - file: develop/release.md
+  - file: develop/git.md
+- caption: About
+  chapters:
+  - file: apidocs/index.rst
+  - file: genindex.md
+  - file: glossary.md
+  - file: changelog.md
